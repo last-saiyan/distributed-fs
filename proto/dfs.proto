@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+// option go_package = "google.golang.org/grpc/examples/helloworld/helloworld";
+
+package proto;
+
+service dfs {
+  rpc GetFileLocation (FileLocReq) returns (FileLocation);
+}
+
+message FileLocation {
+  string ipAddr = 1;
+  string chunkName = 2;
+}
+
+message FileLocReq {
+  string fileName = 1;
+}
