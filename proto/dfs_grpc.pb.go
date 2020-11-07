@@ -17,7 +17,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DfsClient interface {
-	GetFileLocation(ctx context.Context, in *FileLocReq, opts ...grpc.CallOption) (*FileLocation, error)
+	GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocation, error)
+	RenewLock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*RenewalStatus, error)
+	CheckDataNode(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type dfsClient struct {
@@ -28,9 +30,27 @@ func NewDfsClient(cc grpc.ClientConnInterface) DfsClient {
 	return &dfsClient{cc}
 }
 
-func (c *dfsClient) GetFileLocation(ctx context.Context, in *FileLocReq, opts ...grpc.CallOption) (*FileLocation, error) {
+func (c *dfsClient) GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocation, error) {
 	out := new(FileLocation)
 	err := c.cc.Invoke(ctx, "/proto.dfs/GetFileLocation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dfsClient) RenewLock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*RenewalStatus, error) {
+	out := new(RenewalStatus)
+	err := c.cc.Invoke(ctx, "/proto.dfs/RenewLock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dfsClient) CheckDataNode(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, "/proto.dfs/CheckDataNode", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +61,9 @@ func (c *dfsClient) GetFileLocation(ctx context.Context, in *FileLocReq, opts ..
 // All implementations must embed UnimplementedDfsServer
 // for forward compatibility
 type DfsServer interface {
-	GetFileLocation(context.Context, *FileLocReq) (*FileLocation, error)
+	GetFileLocation(context.Context, *FileName) (*FileLocation, error)
+	RenewLock(context.Context, *FileName) (*RenewalStatus, error)
+	CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedDfsServer()
 }
 
@@ -49,8 +71,14 @@ type DfsServer interface {
 type UnimplementedDfsServer struct {
 }
 
-func (UnimplementedDfsServer) GetFileLocation(context.Context, *FileLocReq) (*FileLocation, error) {
+func (UnimplementedDfsServer) GetFileLocation(context.Context, *FileName) (*FileLocation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFileLocation not implemented")
+}
+func (UnimplementedDfsServer) RenewLock(context.Context, *FileName) (*RenewalStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RenewLock not implemented")
+}
+func (UnimplementedDfsServer) CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckDataNode not implemented")
 }
 func (UnimplementedDfsServer) mustEmbedUnimplementedDfsServer() {}
 
@@ -66,7 +94,7 @@ func RegisterDfsServer(s *grpc.Server, srv DfsServer) {
 }
 
 func _Dfs_GetFileLocation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FileLocReq)
+	in := new(FileName)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -78,7 +106,43 @@ func _Dfs_GetFileLocation_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/proto.dfs/GetFileLocation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DfsServer).GetFileLocation(ctx, req.(*FileLocReq))
+		return srv.(DfsServer).GetFileLocation(ctx, req.(*FileName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Dfs_RenewLock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DfsServer).RenewLock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.dfs/RenewLock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DfsServer).RenewLock(ctx, req.(*FileName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Dfs_CheckDataNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DfsServer).CheckDataNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.dfs/CheckDataNode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DfsServer).CheckDataNode(ctx, req.(*HealthCheckRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -90,6 +154,14 @@ var _Dfs_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFileLocation",
 			Handler:    _Dfs_GetFileLocation_Handler,
+		},
+		{
+			MethodName: "RenewLock",
+			Handler:    _Dfs_RenewLock_Handler,
+		},
+		{
+			MethodName: "CheckDataNode",
+			Handler:    _Dfs_CheckDataNode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

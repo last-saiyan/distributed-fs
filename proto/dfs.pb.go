@@ -4,8 +4,6 @@
 // 	protoc        v3.13.0
 // source: proto/dfs.proto
 
-// option go_package = "google.golang.org/grpc/examples/helloworld/helloworld";
-
 package proto
 
 import (
@@ -26,6 +24,58 @@ const (
 // This is a compile-time assertion that a sufficiently up-to-date version
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
+
+type HealthCheckResponse_ServingStatus int32
+
+const (
+	HealthCheckResponse_UNKNOWN         HealthCheckResponse_ServingStatus = 0
+	HealthCheckResponse_SERVING         HealthCheckResponse_ServingStatus = 1
+	HealthCheckResponse_NOT_SERVING     HealthCheckResponse_ServingStatus = 2
+	HealthCheckResponse_SERVICE_UNKNOWN HealthCheckResponse_ServingStatus = 3 // Used only by the Watch method.
+)
+
+// Enum value maps for HealthCheckResponse_ServingStatus.
+var (
+	HealthCheckResponse_ServingStatus_name = map[int32]string{
+		0: "UNKNOWN",
+		1: "SERVING",
+		2: "NOT_SERVING",
+		3: "SERVICE_UNKNOWN",
+	}
+	HealthCheckResponse_ServingStatus_value = map[string]int32{
+		"UNKNOWN":         0,
+		"SERVING":         1,
+		"NOT_SERVING":     2,
+		"SERVICE_UNKNOWN": 3,
+	}
+)
+
+func (x HealthCheckResponse_ServingStatus) Enum() *HealthCheckResponse_ServingStatus {
+	p := new(HealthCheckResponse_ServingStatus)
+	*p = x
+	return p
+}
+
+func (x HealthCheckResponse_ServingStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (HealthCheckResponse_ServingStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_dfs_proto_enumTypes[0].Descriptor()
+}
+
+func (HealthCheckResponse_ServingStatus) Type() protoreflect.EnumType {
+	return &file_proto_dfs_proto_enumTypes[0]
+}
+
+func (x HealthCheckResponse_ServingStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use HealthCheckResponse_ServingStatus.Descriptor instead.
+func (HealthCheckResponse_ServingStatus) EnumDescriptor() ([]byte, []int) {
+	return file_proto_dfs_proto_rawDescGZIP(), []int{4, 0}
+}
 
 type FileLocation struct {
 	state         protoimpl.MessageState
@@ -82,7 +132,7 @@ func (x *FileLocation) GetChunkName() string {
 	return ""
 }
 
-type FileLocReq struct {
+type FileName struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -90,8 +140,8 @@ type FileLocReq struct {
 	FileName string `protobuf:"bytes,1,opt,name=fileName,proto3" json:"fileName,omitempty"`
 }
 
-func (x *FileLocReq) Reset() {
-	*x = FileLocReq{}
+func (x *FileName) Reset() {
+	*x = FileName{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_dfs_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -99,13 +149,13 @@ func (x *FileLocReq) Reset() {
 	}
 }
 
-func (x *FileLocReq) String() string {
+func (x *FileName) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FileLocReq) ProtoMessage() {}
+func (*FileName) ProtoMessage() {}
 
-func (x *FileLocReq) ProtoReflect() protoreflect.Message {
+func (x *FileName) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_dfs_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -117,16 +167,157 @@ func (x *FileLocReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FileLocReq.ProtoReflect.Descriptor instead.
-func (*FileLocReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use FileName.ProtoReflect.Descriptor instead.
+func (*FileName) Descriptor() ([]byte, []int) {
 	return file_proto_dfs_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *FileLocReq) GetFileName() string {
+func (x *FileName) GetFileName() string {
 	if x != nil {
 		return x.FileName
 	}
 	return ""
+}
+
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Service string `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_dfs_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_dfs_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_proto_dfs_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *HealthCheckRequest) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+type RenewalStatus struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+}
+
+func (x *RenewalStatus) Reset() {
+	*x = RenewalStatus{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_dfs_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RenewalStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenewalStatus) ProtoMessage() {}
+
+func (x *RenewalStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_dfs_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenewalStatus.ProtoReflect.Descriptor instead.
+func (*RenewalStatus) Descriptor() ([]byte, []int) {
+	return file_proto_dfs_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RenewalStatus) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Status HealthCheckResponse_ServingStatus `protobuf:"varint,1,opt,name=status,proto3,enum=proto.HealthCheckResponse_ServingStatus" json:"status,omitempty"`
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_dfs_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_dfs_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_proto_dfs_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *HealthCheckResponse) GetStatus() HealthCheckResponse_ServingStatus {
+	if x != nil {
+		return x.Status
+	}
+	return HealthCheckResponse_UNKNOWN
 }
 
 var File_proto_dfs_proto protoreflect.FileDescriptor
@@ -137,15 +328,39 @@ var file_proto_dfs_proto_rawDesc = []byte{
 	0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x69, 0x70, 0x41, 0x64,
 	0x64, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x69, 0x70, 0x41, 0x64, 0x64, 0x72,
 	0x12, 0x1c, 0x0a, 0x09, 0x63, 0x68, 0x75, 0x6e, 0x6b, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x09, 0x63, 0x68, 0x75, 0x6e, 0x6b, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x28,
-	0x0a, 0x0a, 0x46, 0x69, 0x6c, 0x65, 0x4c, 0x6f, 0x63, 0x52, 0x65, 0x71, 0x12, 0x1a, 0x0a, 0x08,
-	0x66, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
-	0x66, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x32, 0x40, 0x0a, 0x03, 0x64, 0x66, 0x73, 0x12,
-	0x39, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x12, 0x11, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x4c,
-	0x6f, 0x63, 0x52, 0x65, 0x71, 0x1a, 0x13, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x46, 0x69,
-	0x6c, 0x65, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x01, 0x28, 0x09, 0x52, 0x09, 0x63, 0x68, 0x75, 0x6e, 0x6b, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x26,
+	0x0a, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x69,
+	0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x66, 0x69,
+	0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x2e, 0x0a, 0x12, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68,
+	0x43, 0x68, 0x65, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07,
+	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x73,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x22, 0x29, 0x0a, 0x0d, 0x52, 0x65, 0x6e, 0x65, 0x77, 0x61,
+	0x6c, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65,
+	0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73,
+	0x73, 0x22, 0xa8, 0x01, 0x0a, 0x13, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x40, 0x0a, 0x06, 0x73, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x28, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x6e, 0x67, 0x53, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x4f, 0x0a, 0x0d, 0x53,
+	0x65, 0x72, 0x76, 0x69, 0x6e, 0x67, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0b, 0x0a, 0x07,
+	0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x53, 0x45, 0x52,
+	0x56, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x0f, 0x0a, 0x0b, 0x4e, 0x4f, 0x54, 0x5f, 0x53, 0x45,
+	0x52, 0x56, 0x49, 0x4e, 0x47, 0x10, 0x02, 0x12, 0x13, 0x0a, 0x0f, 0x53, 0x45, 0x52, 0x56, 0x49,
+	0x43, 0x45, 0x5f, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x03, 0x32, 0xba, 0x01, 0x0a,
+	0x03, 0x64, 0x66, 0x73, 0x12, 0x37, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x4c,
+	0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x0f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x1a, 0x13, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2e, 0x46, 0x69, 0x6c, 0x65, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x32, 0x0a,
+	0x09, 0x52, 0x65, 0x6e, 0x65, 0x77, 0x4c, 0x6f, 0x63, 0x6b, 0x12, 0x0f, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x1a, 0x14, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x52, 0x65, 0x6e, 0x65, 0x77, 0x61, 0x6c, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x12, 0x46, 0x0a, 0x0d, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x61, 0x74, 0x61, 0x4e, 0x6f,
+	0x64, 0x65, 0x12, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x48, 0x65, 0x61, 0x6c, 0x74,
+	0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x0b, 0x5a, 0x09, 0x64, 0x66, 0x73,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -160,19 +375,29 @@ func file_proto_dfs_proto_rawDescGZIP() []byte {
 	return file_proto_dfs_proto_rawDescData
 }
 
-var file_proto_dfs_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_dfs_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_proto_dfs_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proto_dfs_proto_goTypes = []interface{}{
-	(*FileLocation)(nil), // 0: proto.FileLocation
-	(*FileLocReq)(nil),   // 1: proto.FileLocReq
+	(HealthCheckResponse_ServingStatus)(0), // 0: proto.HealthCheckResponse.ServingStatus
+	(*FileLocation)(nil),                   // 1: proto.FileLocation
+	(*FileName)(nil),                       // 2: proto.FileName
+	(*HealthCheckRequest)(nil),             // 3: proto.HealthCheckRequest
+	(*RenewalStatus)(nil),                  // 4: proto.RenewalStatus
+	(*HealthCheckResponse)(nil),            // 5: proto.HealthCheckResponse
 }
 var file_proto_dfs_proto_depIdxs = []int32{
-	1, // 0: proto.dfs.GetFileLocation:input_type -> proto.FileLocReq
-	0, // 1: proto.dfs.GetFileLocation:output_type -> proto.FileLocation
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: proto.HealthCheckResponse.status:type_name -> proto.HealthCheckResponse.ServingStatus
+	2, // 1: proto.dfs.GetFileLocation:input_type -> proto.FileName
+	2, // 2: proto.dfs.RenewLock:input_type -> proto.FileName
+	3, // 3: proto.dfs.CheckDataNode:input_type -> proto.HealthCheckRequest
+	1, // 4: proto.dfs.GetFileLocation:output_type -> proto.FileLocation
+	4, // 5: proto.dfs.RenewLock:output_type -> proto.RenewalStatus
+	5, // 6: proto.dfs.CheckDataNode:output_type -> proto.HealthCheckResponse
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proto_dfs_proto_init() }
@@ -194,7 +419,43 @@ func file_proto_dfs_proto_init() {
 			}
 		}
 		file_proto_dfs_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FileLocReq); i {
+			switch v := v.(*FileName); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_dfs_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*HealthCheckRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_dfs_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RenewalStatus); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_dfs_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*HealthCheckResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -211,13 +472,14 @@ func file_proto_dfs_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_dfs_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_proto_dfs_proto_goTypes,
 		DependencyIndexes: file_proto_dfs_proto_depIdxs,
+		EnumInfos:         file_proto_dfs_proto_enumTypes,
 		MessageInfos:      file_proto_dfs_proto_msgTypes,
 	}.Build()
 	File_proto_dfs_proto = out.File

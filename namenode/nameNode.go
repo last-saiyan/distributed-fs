@@ -1,24 +1,31 @@
 package namenode
 
-// NameNode is struct maintaining name-meta
-type NameNode struct {
-	fileName string
+import (
+	"fmt"
+)
+
+type fileName = string
+type chunkName string
+type ipAddr string
+
+var filenameTochunk map[fileName][]chunkName
+var chunkNameToServer map[chunkName][]ipAddr
+
+// Init the namenode datastructures,
+// todo recover namenode from crash
+func Init() {
+	filenameTochunk = make(map[fileName][]chunkName)
+	chunkNameToServer = make(map[chunkName][]ipAddr)
 }
 
-// File is interface for file path
-type File struct {
-	name string
+// AppendToFile appends to existing file or creates a new file
+func AppendToFile(name string) string {
+	gfc := fileName(name)
+	fmt.Print("asdf", gfc)
+	return "asdf"
 }
 
-func (nameNode *NameNode) setName(fileName File) {
-	nameNode.fileName = fileName.name
-}
-
-func (nameNode *NameNode) getName() string {
-	return nameNode.fileName
-}
-
-// NewNameNode new instance of name node
-func NewNameNode() *NameNode {
-	return new(NameNode)
+// GetFileLocation asdf
+func GetFileLocation(fileName string) map[string][]string {
+	return nil
 }

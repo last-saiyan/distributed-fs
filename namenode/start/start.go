@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	namenode "dfs/namenode"
 	"dfs/proto"
 	"log"
 	"net"
@@ -17,9 +18,16 @@ type server struct {
 	proto.UnimplementedDfsServer
 }
 
-func (s *server) GetFileLocation(ctx context.Context, in *proto.FileLocReq) (*proto.FileLocation, error) {
+func (s *server) GetFileLocation(ctx context.Context, in *proto.FileName) (*proto.FileLocation, error) {
 	println(in.FileName)
+	namenode.GetFileLocation(in.FileName)
 	return &proto.FileLocation{ChunkName: "chunkNNamee"}, nil
+}
+
+func (s *server) RenewLock(ctx context.Context, in *proto.FileName) (*proto.RenewalStatus, error) {
+	println(in.FileName)
+	namenode.GetFileLocation(in.FileName)
+	return &proto.RenewalStatus{Success: true}, nil
 }
 
 func main() {
@@ -32,4 +40,6 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+
+	namenode.Init()
 }

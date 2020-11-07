@@ -2,10 +2,14 @@ syntax = "proto3";
 
 // option go_package = "google.golang.org/grpc/examples/helloworld/helloworld";
 
+option go_package = "dfs/proto";
+
 package proto;
 
 service dfs {
-  rpc GetFileLocation (FileLocReq) returns (FileLocation);
+  rpc GetFileLocation (FileName) returns (FileLocation);
+  rpc RenewLock(FileName) returns (RenewalStatus);
+  rpc CheckDataNode(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 message FileLocation {
@@ -13,6 +17,24 @@ message FileLocation {
   string chunkName = 2;
 }
 
-message FileLocReq {
+message FileName {
   string fileName = 1;
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message RenewalStatus {
+  bool success = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
 }
