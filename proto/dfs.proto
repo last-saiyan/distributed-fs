@@ -10,10 +10,11 @@ service dfs {
   rpc GetFileLocation (FileName) returns (FileLocation);
   rpc RenewLock(FileName) returns (RenewalStatus);
   rpc CheckDataNode(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc GetBlock (FileName) returns (stream File){};
 }
 
 message FileLocation {
-  string ipAddr = 1;
+  string ipAddr = 3;
   string chunkName = 2;
 }
 
@@ -37,4 +38,8 @@ message HealthCheckResponse {
     SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
   }
   ServingStatus status = 1;
+}
+
+message File {
+  bytes content = 1;
 }

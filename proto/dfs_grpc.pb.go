@@ -20,6 +20,7 @@ type DfsClient interface {
 	GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocation, error)
 	RenewLock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*RenewalStatus, error)
 	CheckDataNode(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
+	GetBlock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (Dfs_GetBlockClient, error)
 }
 
 type dfsClient struct {
@@ -57,6 +58,38 @@ func (c *dfsClient) CheckDataNode(ctx context.Context, in *HealthCheckRequest, o
 	return out, nil
 }
 
+func (c *dfsClient) GetBlock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (Dfs_GetBlockClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Dfs_serviceDesc.Streams[0], "/proto.dfs/GetBlock", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dfsGetBlockClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Dfs_GetBlockClient interface {
+	Recv() (*File, error)
+	grpc.ClientStream
+}
+
+type dfsGetBlockClient struct {
+	grpc.ClientStream
+}
+
+func (x *dfsGetBlockClient) Recv() (*File, error) {
+	m := new(File)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // DfsServer is the server API for Dfs service.
 // All implementations must embed UnimplementedDfsServer
 // for forward compatibility
@@ -64,6 +97,7 @@ type DfsServer interface {
 	GetFileLocation(context.Context, *FileName) (*FileLocation, error)
 	RenewLock(context.Context, *FileName) (*RenewalStatus, error)
 	CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
+	GetBlock(*FileName, Dfs_GetBlockServer) error
 	mustEmbedUnimplementedDfsServer()
 }
 
@@ -79,6 +113,9 @@ func (UnimplementedDfsServer) RenewLock(context.Context, *FileName) (*RenewalSta
 }
 func (UnimplementedDfsServer) CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckDataNode not implemented")
+}
+func (UnimplementedDfsServer) GetBlock(*FileName, Dfs_GetBlockServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetBlock not implemented")
 }
 func (UnimplementedDfsServer) mustEmbedUnimplementedDfsServer() {}
 
@@ -147,6 +184,27 @@ func _Dfs_CheckDataNode_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Dfs_GetBlock_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(FileName)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(DfsServer).GetBlock(m, &dfsGetBlockServer{stream})
+}
+
+type Dfs_GetBlockServer interface {
+	Send(*File) error
+	grpc.ServerStream
+}
+
+type dfsGetBlockServer struct {
+	grpc.ServerStream
+}
+
+func (x *dfsGetBlockServer) Send(m *File) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _Dfs_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.dfs",
 	HandlerType: (*DfsServer)(nil),
@@ -164,6 +222,12 @@ var _Dfs_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Dfs_CheckDataNode_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetBlock",
+			Handler:       _Dfs_GetBlock_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "proto/dfs.proto",
 }

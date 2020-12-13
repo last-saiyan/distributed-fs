@@ -1,9 +1,11 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"dfs/proto"
 	"fmt"
+	"io"
 	"log"
 	"time"
 
@@ -17,24 +19,48 @@ const (
 // Read a file
 // returns bytes of the file
 func Read(fileName string) []byte {
+	chunkName, ipAddr := getChunkName(fileName)
+	return readBlock(chunkName, ipAddr)
+}
 
+func readBlock(chunkName string, ipAddr string) []byte {
+	conn, err := grpc.Dial(ipAddr, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := proto.NewDfsClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	fileStream, err := c.GetBlock(ctx, &proto.FileName{FileName: chunkName})
+	chunkData := bytes.Buffer{}
+	for {
+		res, err := fileStream.Recv()
+		if err == io.EOF {
+			return chunkData.Bytes()
+		}
+		if err != nil {
+			log.Fatal("cannot receive response: ", err)
+		}
+		chunkData.Write(res.GetContent())
+	}
+}
+
+func getChunkName(fileName string) (string, string) {
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
 	c := proto.NewDfsClient(conn)
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	r, err := c.GetFileLocation(ctx, &proto.FileName{FileName: fileName})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
-	log.Printf("Greeting: %s", r.GetChunkName())
-
-	fmt.Print("read file")
-	return nil
+	return r.GetChunkName(), r.GetIpAddr()
 }
 
 // Write a new file
