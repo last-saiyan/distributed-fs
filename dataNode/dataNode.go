@@ -2,57 +2,62 @@ package datanode
 
 import (
 	"bufio"
-	"dfs/proto"
 	"io"
 	"log"
 	"os"
 )
 
-var blockSize = 1000
+var bufferSize = 1000
 
 // WriteDataToBlock dadf
 func WriteDataToBlock(blockName string, data []byte) {
 
 }
 
-// ReadBlockData asdfa
-func ReadBlockData(blockName string, stream proto.) []byte {
+type block struct {
+	blockName string
+	offset    int
+	chunkSize int
+	reader    *bufio.Reader
+	buffer    *[]byte
+	dataRead  int
+	file      *os.File
+}
 
+func (b block) initBlock(new bool, blockName string) {
 	file, err := os.Open(blockName)
 	if err != nil {
 		log.Fatal("cannot open image file: ", err)
 	}
-	defer file.Close()
 	reader := bufio.NewReader(file)
-	buffer := make([]byte, 1024)
+	b.file = file
+	b.blockName = blockName
+	b.reader = reader
+	buffer := make([]byte, bufferSize)
+	b.buffer = &buffer
+	b.dataRead = -1
+}
 
-	for {
-		n, err := reader.Read(buffer)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal("cannot read chunk to buffer: ", err)
-		}
-
-		res := &proto.File{
-			Content: buffer[:n],
-		}
-
-		// res := &pb.UploadImageRequest{
-		// 	Data: &pb.UploadImageRequest_ChunkData{
-		// 		ChunkData: buffer[:n],
-		// 	},
-		// }
-
-		err = stream.Send(res)
-		if err != nil {
-			log.Fatal("cannot send chunk to server: ", err, stream.RecvMsg(nil))
-		}
+func (b block) hasNextChunk() bool {
+	n, err := b.reader.Read(*b.buffer)
+	if err == io.EOF {
+		b.file.Close()
+		return false
 	}
+	if err != nil {
+		log.Fatal("cannot read chunk to buffer: ", err)
+	}
+	b.dataRead = n
+	return true
+}
 
-	// response := make([]byte, blockSize)
-	// return response
+func (b block) getNextChunk() ([]byte, int, error) {
+	if b.dataRead == -1 {
+		return nil, 0, nil
+	}
+	n := b.dataRead
+	b.dataRead = -1
+	return *b.buffer, n, nil
 }
 
 // storageid, blockreport, commit, handshake
