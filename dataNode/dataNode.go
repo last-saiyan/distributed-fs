@@ -7,14 +7,8 @@ import (
 	"os"
 )
 
-var bufferSize = 1000
-
-// WriteDataToBlock dadf
-func WriteDataToBlock(blockName string, data []byte) {
-
-}
-
-type block struct {
+// Block struct provides api to read and write block
+type Block struct {
 	blockName string
 	offset    int
 	chunkSize int
@@ -22,9 +16,10 @@ type block struct {
 	buffer    *[]byte
 	dataRead  int
 	file      *os.File
+	blockSize int
 }
 
-func (b block) initBlock(new bool, blockName string) {
+func (b *Block) initBlock(new bool, blockName string) {
 	file, err := os.Open(blockName)
 	if err != nil {
 		log.Fatal("cannot open image file: ", err)
@@ -33,12 +28,12 @@ func (b block) initBlock(new bool, blockName string) {
 	b.file = file
 	b.blockName = blockName
 	b.reader = reader
-	buffer := make([]byte, bufferSize)
+	buffer := make([]byte, b.chunkSize)
 	b.buffer = &buffer
 	b.dataRead = -1
 }
 
-func (b block) hasNextChunk() bool {
+func (b *Block) hasNextChunk() bool {
 	n, err := b.reader.Read(*b.buffer)
 	if err == io.EOF {
 		b.file.Close()
@@ -51,13 +46,42 @@ func (b block) hasNextChunk() bool {
 	return true
 }
 
-func (b block) getNextChunk() ([]byte, int, error) {
+func (b *Block) getNextChunk() ([]byte, int, error) {
 	if b.dataRead == -1 {
 		return nil, 0, nil
 	}
 	n := b.dataRead
 	b.dataRead = -1
 	return *b.buffer, n, nil
+}
+
+func (b *Block) writeChunk(chunk []byte) (int, error) {
+	// n, err := b.file.Write(chunk)
+	finfo, err := b.file.Stat()
+	if err != nil {
+		log.Fatal("cannot open image file: ", err)
+	}
+	currBlockSize := finfo.Size()
+
+	if b.blockSize < (len(chunk) + int(currBlockSize)) {
+		n, err := b.file.Write(chunk)
+		if err != nil {
+			log.Fatal("cannot open image file: ", err)
+		}
+		return n, nil
+	}
+	if b.blockSize < int(currBlockSize) {
+		return -1, nil
+	}
+	if b.blockSize == int(currBlockSize) {
+		return 0, nil
+	}
+	capacity := (b.blockSize - int(currBlockSize))
+	n, err := b.file.Write(chunk[:capacity])
+	if err != nil {
+		log.Fatal("cannot open image file: ", err)
+	}
+	return n, nil
 }
 
 // storageid, blockreport, commit, handshake
