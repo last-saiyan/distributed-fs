@@ -19,7 +19,7 @@ type Block struct {
 	blockSize int
 }
 
-func (b *Block) initBlock(new bool, blockName string) {
+func (b *Block) initBlock(blockName string) {
 	file, err := os.Open(blockName)
 	if err != nil {
 		log.Fatal("cannot open image file: ", err)
@@ -28,14 +28,20 @@ func (b *Block) initBlock(new bool, blockName string) {
 	b.file = file
 	b.blockName = blockName
 	b.reader = reader
+	b.chunkSize = 2
 	buffer := make([]byte, b.chunkSize)
 	b.buffer = &buffer
 	b.dataRead = -1
+	b.offset = 0
 }
 
 func (b *Block) hasNextChunk() bool {
+	if b.dataRead != -1 {
+		return true
+	}
 	n, err := b.reader.Read(*b.buffer)
 	if err == io.EOF {
+		b.dataRead = -1
 		b.file.Close()
 		return false
 	}
