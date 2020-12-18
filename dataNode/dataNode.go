@@ -19,12 +19,19 @@ type Block struct {
 	blockSize int
 }
 
-func (b *Block) initBlock(blockName string) {
-	file, err := os.Open(blockName)
+func (b *Block) initBlock(blockName string, mode string) {
+	var file *os.File
+	var err error
+	var reader *bufio.Reader
+	if mode == "r" {
+		file, err = os.Open(blockName)
+		reader = bufio.NewReader(file)
+	} else if mode == "w" {
+		file, err = os.OpenFile(blockName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	}
 	if err != nil {
 		log.Fatal("cannot open image file: ", err)
 	}
-	reader := bufio.NewReader(file)
 	b.file = file
 	b.blockName = blockName
 	b.reader = reader
