@@ -19,7 +19,12 @@ message FileLocation {
 }
 
 message FileName {
+  enum Mode {
+    READ = 0;
+    WRITE = 1;
+  }
   string fileName = 1;
+  Mode mode = 2;
 }
 
 message HealthCheckRequest {

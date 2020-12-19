@@ -19,9 +19,13 @@ type server struct {
 }
 
 func (s *server) GetFileLocation(ctx context.Context, in *proto.FileName) (*proto.FileLocation, error) {
-	println(in.FileName)
-	namenode.GetFileLocation(in.FileName)
-	return &proto.FileLocation{ChunkName: "chunkNNamee"}, nil
+	if proto.FileName_READ == in.Mode {
+		namenode.GetFileLocation(in.FileName)
+		return &proto.FileLocation{ChunkName: "chunkNNamee"}, nil
+	} else if proto.FileName_WRITE == in.Mode {
+
+	}
+	return nil, nil
 }
 
 func (s *server) RenewLock(ctx context.Context, in *proto.FileName) (*proto.RenewalStatus, error) {

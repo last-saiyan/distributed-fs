@@ -19,7 +19,7 @@ const (
 // Read a file
 // returns bytes of the file
 func Read(fileName string) []byte {
-	chunkName, ipAddr := getChunkName(fileName)
+	chunkName, ipAddr := getChunkName(fileName, proto.FileName_READ)
 	// assigning for testing purpose
 	chunkName = "temp/temp.txt"
 	ipAddr = address
@@ -50,7 +50,7 @@ func readBlock(chunkName string, ipAddr string) []byte {
 	}
 }
 
-func getChunkName(fileName string) (string, string) {
+func getChunkName(fileName string, mode proto.FileName_Mode) (string, string) {
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -59,7 +59,7 @@ func getChunkName(fileName string) (string, string) {
 	c := proto.NewDfsClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.GetFileLocation(ctx, &proto.FileName{FileName: fileName})
+	r, err := c.GetFileLocation(ctx, &proto.FileName{FileName: fileName, Mode: mode})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
