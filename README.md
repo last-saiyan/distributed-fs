@@ -1,7 +1,22 @@
 # distributed-fs
-Distributed file system
+
+WIP 
+
+## build and run project
+
+#### generate protobuf files
+`protoc --go_out=. --go_opt=paths=source_relative     --go-grpc_out=. --go-grpc_opt=paths=source_relative proto/dfs.proto`
+
+#### start dataNode server
+`go run dataNode/start/start.go`
+
+#### start dataNode server
+`go run namenode/start/start.go`
 
 
-generate protobuf files
+## resources
+HDFS architecture 
+http://itm-vm.shidler.hawaii.edu/HDFS/
 
-`protoc --go_out=. --go_opt=paths=source_relative     --go-grpc_out=. --go-grpc_opt=paths=source_relative     proto/dfs.proto`
+GFS paper
+https://research.google.com/archive/gfs-sosp2003.pdf
