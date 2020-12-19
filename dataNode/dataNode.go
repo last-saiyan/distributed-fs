@@ -19,7 +19,7 @@ type Block struct {
 	blockSize int
 }
 
-func (b *Block) initBlock(blockName string, mode string) {
+func (b *Block) initBlock(blockName string, mode string, blockSize int, chunkSize int) {
 	var file *os.File
 	var err error
 	var reader *bufio.Reader
@@ -35,7 +35,8 @@ func (b *Block) initBlock(blockName string, mode string) {
 	b.file = file
 	b.blockName = blockName
 	b.reader = reader
-	b.chunkSize = 2
+	b.chunkSize = chunkSize
+	b.blockSize = blockSize
 	buffer := make([]byte, b.chunkSize)
 	b.buffer = &buffer
 	b.dataRead = -1
@@ -69,27 +70,26 @@ func (b *Block) getNextChunk() ([]byte, int, error) {
 }
 
 func (b *Block) writeChunk(chunk []byte) (int, error) {
-	// n, err := b.file.Write(chunk)
 	finfo, err := b.file.Stat()
 	if err != nil {
-		log.Fatal("cannot open image file: ", err)
+		log.Fatal("cannot open the file: ", err)
 	}
-	currBlockSize := finfo.Size()
+	currBlockSize := int(finfo.Size())
 
-	if b.blockSize < (len(chunk) + int(currBlockSize)) {
+	if b.blockSize < (len(chunk) + currBlockSize) {
 		n, err := b.file.Write(chunk)
 		if err != nil {
-			log.Fatal("cannot open image file: ", err)
+			log.Fatal("cannot write to file: ", err)
 		}
 		return n, nil
 	}
-	if b.blockSize < int(currBlockSize) {
+	if b.blockSize < currBlockSize {
 		return -1, nil
 	}
-	if b.blockSize == int(currBlockSize) {
+	if b.blockSize == currBlockSize {
 		return 0, nil
 	}
-	capacity := (b.blockSize - int(currBlockSize))
+	capacity := (b.blockSize - currBlockSize)
 	n, err := b.file.Write(chunk[:capacity])
 	if err != nil {
 		log.Fatal("cannot open image file: ", err)
