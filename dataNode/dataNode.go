@@ -19,7 +19,8 @@ type Block struct {
 	blockSize int
 }
 
-func (b *Block) initBlock(blockName string, mode string, blockSize int, chunkSize int) {
+// InitBlock initilizes the struct with necessary details
+func (b *Block) InitBlock(blockName string, mode string, blockSize int, chunkSize int) {
 	var file *os.File
 	var err error
 	var reader *bufio.Reader
@@ -43,7 +44,8 @@ func (b *Block) initBlock(blockName string, mode string, blockSize int, chunkSiz
 	b.offset = 0
 }
 
-func (b *Block) hasNextChunk() bool {
+// HasNextChunk checks if next chunk of data is present in the block
+func (b *Block) HasNextChunk() bool {
 	if b.dataRead != -1 {
 		return true
 	}
@@ -60,13 +62,14 @@ func (b *Block) hasNextChunk() bool {
 	return true
 }
 
-func (b *Block) getNextChunk() ([]byte, int, error) {
+// GetNextChunk gets the next chunk of data
+func (b *Block) GetNextChunk() (*[]byte, int, error) {
 	if b.dataRead == -1 {
 		return nil, 0, nil
 	}
 	n := b.dataRead
 	b.dataRead = -1
-	return *b.buffer, n, nil
+	return b.buffer, n, nil
 }
 
 func (b *Block) writeChunk(chunk []byte) (int, error) {

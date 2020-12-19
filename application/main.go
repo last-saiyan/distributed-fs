@@ -2,9 +2,11 @@ package main
 
 import (
 	"dfs/client"
+	"fmt"
 )
 
 // application program to interact with the client
 func main() {
-	client.Read("asdf")
+	res := client.Read("asdf")
+	fmt.Println(string(res))
 }

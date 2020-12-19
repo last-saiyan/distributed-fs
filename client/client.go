@@ -20,6 +20,9 @@ const (
 // returns bytes of the file
 func Read(fileName string) []byte {
 	chunkName, ipAddr := getChunkName(fileName)
+	// assigning for testing purpose
+	chunkName = "temp/temp.txt"
+	ipAddr = address
 	return readBlock(chunkName, ipAddr)
 }
 

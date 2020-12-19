@@ -1,6 +1,7 @@
 package main
 
 import (
+	datanode "dfs/dataNode"
 	"dfs/namenode"
 	"dfs/proto"
 	"log"
@@ -17,14 +18,18 @@ type server struct {
 	proto.UnimplementedDfsServer
 }
 
-// func GetBlock() ()  {
-
-// }
-
 func (s *server) GetBlock(in *proto.FileName, stream proto.Dfs_GetBlockServer) error {
-	println(in.FileName)
 	namenode.GetFileLocation(in.FileName)
-	return stream.Send(&proto.File{Content: make([]byte, 10)})
+	b := datanode.Block{}
+	b.InitBlock(in.FileName, "r", 500, 20)
+	for b.HasNextChunk() {
+		chunk, n, err := b.GetNextChunk()
+		if err != nil {
+			return err
+		}
+		stream.Send(&proto.File{Content: (*chunk)[:n]})
+	}
+	return nil
 }
 
 func main() {
