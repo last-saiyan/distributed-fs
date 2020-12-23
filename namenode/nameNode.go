@@ -4,18 +4,36 @@ import (
 	"fmt"
 )
 
-type fileName = string
-type chunkName string
+// Block uhb
+type Block struct {
+	name blockName
+	gs   int
+}
+
+// BlockMeta wewer
+type BlockMeta struct {
+	name     blockName
+	fileSize int
+	addr     ipAddr
+}
+
+type blockName string
+type fileName string
 type ipAddr string
 
-var filenameTochunk map[fileName][]chunkName
-var chunkNameToServer map[chunkName][]ipAddr
+// this data needs to be persisted in disk
+// for recovery of namenode
+var fileToBlock map[fileName][]Block
+
+// this is not necessary to be in disk
+// this can be obtained from datanode blockreport()
+var blockToLocation map[blockName][]BlockMeta
 
 // Init the namenode datastructures,
 // todo recover namenode from crash
 func Init() {
-	filenameTochunk = make(map[fileName][]chunkName)
-	chunkNameToServer = make(map[chunkName][]ipAddr)
+	fileToBlock = make(map[fileName][]Block)
+	blockToLocation = make(map[blockName][]BlockMeta)
 }
 
 // AppendToFile appends to existing file or creates a new file
