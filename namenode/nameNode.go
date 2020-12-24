@@ -1,6 +1,7 @@
 package namenode
 
 import (
+	"sort"
 	"time"
 )
 
@@ -24,8 +25,8 @@ type ipAddr string
 
 // DatanodeMeta metadata of datanode
 type DatanodeMeta struct {
-	addr   ipAddr
-	memory int
+	addr      ipAddr
+	diskUsage int
 }
 
 // NameNode struct to interact with the namenode
@@ -41,15 +42,17 @@ type NameNode struct {
 	// datanodeList contains list of datanode ipAddr
 	datanodeList []DatanodeMeta
 
-	blockSize int
+	blockSize         int
+	replicationFactor int
 }
 
 // Init the namenode datastructures,
 // todo recover namenode from crash
-func (nn *NameNode) Init(blockSize int) {
+func (nn *NameNode) Init(blockSize int, replicationFactor int) {
 	nn.fileToBlock = make(map[fileName][]Block)
 	nn.blockToLocation = make(map[blockName][]BlockMeta)
 	nn.blockSize = blockSize
+	nn.replicationFactor = replicationFactor
 }
 
 // AddDataNode adds ip to list of datanodeList
@@ -58,8 +61,14 @@ func (nn *NameNode) AddDataNode(meta DatanodeMeta) {
 }
 
 // pick datanode with most memory
-func pickDataNodeToAddNewBlock(count int) []DatanodeMeta {
-	return nil
+func (nn *NameNode) pickDataNodeToAddNewBlock(count int) ([]DatanodeMeta, error) {
+	if len(nn.datanodeList) < nn.replicationFactor {
+		return nil, ErrReplicaCount
+	}
+	sort.SliceStable(nn.datanodeList, func(i, j int) bool {
+		return nn.datanodeList[i].diskUsage < nn.datanodeList[j].diskUsage
+	})
+	return nn.datanodeList[0:count], nil
 }
 
 // AppendBlock appends to existing file or creates a new file
@@ -74,7 +83,10 @@ func (nn *NameNode) AppendBlock(name string) ([]BlockMeta, error) {
 	blockArr = append(blockArr, blk)
 	nn.fileToBlock[file] = blockArr
 
-	datanodes := pickDataNodeToAddNewBlock(5)
+	datanodes, err := nn.pickDataNodeToAddNewBlock(nn.replicationFactor)
+	if err != nil {
+		return nil, err
+	}
 	blockMetaArr := make([]BlockMeta, 0)
 	for _, datanode := range datanodes {
 		blkMeta := BlockMeta{name: blkName, addr: datanode.addr, fileSize: 0}

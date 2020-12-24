@@ -10,3 +10,6 @@ var ErrFileExists = errors.New("file with this name is present")
 
 // ErrFileOpen file is not yet closed
 var ErrFileOpen = errors.New("file is not yet closed")
+
+// ErrReplicaCount not enough datanode to replicate
+var ErrReplicaCount = errors.New("replica count exceeds datanode count")
