@@ -1,7 +1,6 @@
 package namenode
 
 import (
-	"errors"
 	"time"
 )
 
@@ -10,8 +9,6 @@ type Block struct {
 	name blockName
 	gs   int64
 }
-
-var BlockSize = 100
 
 // BlockMeta wewer
 type BlockMeta struct {
@@ -31,35 +28,33 @@ type DatanodeMeta struct {
 	memory int
 }
 
-// this data needs to be persisted in disk
-// for recovery of namenode
-var fileToBlock map[fileName][]Block
+// NameNode struct to interact with the namenode
+type NameNode struct {
+	// fileToBlock data needs to be persisted in disk
+	// for recovery of namenode
+	fileToBlock map[fileName][]Block
 
-// this is not necessary to be in disk
-// this can be obtained from datanode blockreport()
-var blockToLocation map[blockName][]BlockMeta
+	// blockToLocation is not necessary to be in disk
+	// blockToLocation can be obtained from datanode blockreport()
+	blockToLocation map[blockName][]BlockMeta
 
-var datanodeList []DatanodeMeta
+	// datanodeList contains list of datanode ipAddr
+	datanodeList []DatanodeMeta
 
-// ErrFileNotFound file is not found
-var ErrFileNotFound = errors.New("file not found")
-
-// ErrFileExists file with this name is already present
-var ErrFileExists = errors.New("file with this name is present")
-
-// ErrFileOpen asd
-var ErrFileOpen = errors.New("file is not yet closed")
+	blockSize int
+}
 
 // Init the namenode datastructures,
 // todo recover namenode from crash
-func Init() {
-	fileToBlock = make(map[fileName][]Block)
-	blockToLocation = make(map[blockName][]BlockMeta)
+func (nn *NameNode) Init(blockSize int) {
+	nn.fileToBlock = make(map[fileName][]Block)
+	nn.blockToLocation = make(map[blockName][]BlockMeta)
+	nn.blockSize = blockSize
 }
 
 // AddDataNode adds ip to list of datanodeList
-func AddDataNode(meta DatanodeMeta) {
-	datanodeList = append(datanodeList, meta)
+func (nn *NameNode) AddDataNode(meta DatanodeMeta) {
+	nn.datanodeList = append(nn.datanodeList, meta)
 }
 
 // pick datanode with most memory
@@ -68,16 +63,16 @@ func pickDataNodeToAddNewBlock(count int) []DatanodeMeta {
 }
 
 // AppendBlock appends to existing file or creates a new file
-func AppendBlock(name string) ([]BlockMeta, error) {
+func (nn *NameNode) AppendBlock(name string) ([]BlockMeta, error) {
 	file := fileName(name)
-	blockArr, found := fileToBlock[file]
+	blockArr, found := nn.fileToBlock[file]
 	if !found {
 		return nil, ErrFileNotFound
 	}
 	blkName := blockName(name + "-" + string(len(blockArr)))
 	blk := Block{name: blkName, gs: time.Now().Unix()}
 	blockArr = append(blockArr, blk)
-	fileToBlock[file] = blockArr
+	nn.fileToBlock[file] = blockArr
 
 	datanodes := pickDataNodeToAddNewBlock(5)
 	blockMetaArr := make([]BlockMeta, 0)
@@ -85,7 +80,7 @@ func AppendBlock(name string) ([]BlockMeta, error) {
 		blkMeta := BlockMeta{name: blkName, addr: datanode.addr, fileSize: 0}
 		blockMetaArr = append(blockMetaArr, blkMeta)
 	}
-	blockToLocation[blkName] = blockMetaArr
+	nn.blockToLocation[blkName] = blockMetaArr
 	return blockMetaArr, nil
 }
 
@@ -95,34 +90,34 @@ func GetFileLocation(fileName string) map[string][]string {
 }
 
 // CreateFile todo ! research about this
-func CreateFile(name string) error {
+func (nn *NameNode) CreateFile(name string) error {
 	file := fileName(name)
-	_, found := fileToBlock[file]
+	_, found := nn.fileToBlock[file]
 	if found {
 		return ErrFileExists
 	}
 	blckArr := make([]Block, 0)
-	fileToBlock[file] = blckArr
+	nn.fileToBlock[file] = blckArr
 	return nil
 }
 
 // WriteToFile returns datanode and block name
-func WriteToFile(name string) ([]BlockMeta, error) {
+func (nn *NameNode) WriteToFile(name string) ([]BlockMeta, error) {
 	file := fileName(name)
-	blockArr, found := fileToBlock[file]
+	blockArr, found := nn.fileToBlock[file]
 	if !found {
 		return nil, ErrFileNotFound
 	}
 	lastBlock := blockArr[len(blockArr)-1]
 	// perform checks on blockMetaArr if new block has to be created
-	blockMetaArr, found := blockToLocation[lastBlock.name]
+	blockMetaArr, found := nn.blockToLocation[lastBlock.name]
 	for _, blockMeta := range blockMetaArr {
 		if blockMeta.state != "committed" {
 			return nil, ErrFileOpen
 		}
 	}
-	if blockMetaArr[0].fileSize == BlockSize {
-		return AppendBlock(name)
+	if blockMetaArr[0].fileSize == nn.blockSize {
+		return nn.AppendBlock(name)
 	}
 	return blockMetaArr, nil
 }
