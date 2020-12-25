@@ -2,6 +2,7 @@ package namenode
 
 import (
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -25,8 +26,8 @@ type ipAddr string
 
 // DatanodeMeta metadata of datanode
 type DatanodeMeta struct {
-	addr      ipAddr
-	diskUsage int
+	Addr      ipAddr
+	DiskUsage int
 }
 
 // NameNode struct to interact with the namenode
@@ -66,19 +67,28 @@ func (nn *NameNode) pickDataNodeToAddNewBlock(count int) ([]DatanodeMeta, error)
 		return nil, ErrReplicaCount
 	}
 	sort.SliceStable(nn.datanodeList, func(i, j int) bool {
-		return nn.datanodeList[i].diskUsage < nn.datanodeList[j].diskUsage
+		return nn.datanodeList[i].DiskUsage < nn.datanodeList[j].DiskUsage
 	})
 	return nn.datanodeList[0:count], nil
 }
 
-// AppendBlock appends to existing file or creates a new file
-func (nn *NameNode) AppendBlock(name string) ([]BlockMeta, error) {
+func createBlockMeta(name blockName, addr ipAddr, fileSize int, state string) BlockMeta {
+	blk := BlockMeta{}
+	blk.name = name
+	blk.addr = addr
+	blk.fileSize = fileSize
+	blk.state = state
+	return blk
+}
+
+// appendBlock appends new block to the file returns BlockMeta array
+func (nn *NameNode) appendBlock(name string) ([]BlockMeta, error) {
 	file := fileName(name)
 	blockArr, found := nn.fileToBlock[file]
 	if !found {
 		return nil, ErrFileNotFound
 	}
-	blkName := blockName(name + "-" + string(len(blockArr)))
+	blkName := blockName(name + "-" + strconv.Itoa(len(blockArr)))
 	blk := Block{name: blkName, gs: time.Now().Unix()}
 	blockArr = append(blockArr, blk)
 	nn.fileToBlock[file] = blockArr
@@ -89,7 +99,7 @@ func (nn *NameNode) AppendBlock(name string) ([]BlockMeta, error) {
 	}
 	blockMetaArr := make([]BlockMeta, 0)
 	for _, datanode := range datanodes {
-		blkMeta := BlockMeta{name: blkName, addr: datanode.addr, fileSize: 0}
+		blkMeta := createBlockMeta(blkName, datanode.Addr, 0, "pending")
 		blockMetaArr = append(blockMetaArr, blkMeta)
 	}
 	nn.blockToLocation[blkName] = blockMetaArr
@@ -102,15 +112,21 @@ func GetFileLocation(fileName string) map[string][]string {
 }
 
 // CreateFile todo ! research about this
-func (nn *NameNode) CreateFile(name string) error {
+func (nn *NameNode) CreateFile(name string) ([]BlockMeta, error) {
 	file := fileName(name)
 	_, found := nn.fileToBlock[file]
 	if found {
-		return ErrFileExists
+		return nil, ErrFileExists
 	}
 	blckArr := make([]Block, 0)
 	nn.fileToBlock[file] = blckArr
-	return nil
+
+	blockMetaArr, err := nn.appendBlock(name)
+	if err != nil {
+		delete(nn.fileToBlock, file)
+		return nil, err
+	}
+	return blockMetaArr, nil
 }
 
 // WriteToFile returns datanode and block name
@@ -129,7 +145,7 @@ func (nn *NameNode) WriteToFile(name string) ([]BlockMeta, error) {
 		}
 	}
 	if blockMetaArr[0].fileSize == nn.blockSize {
-		return nn.AppendBlock(name)
+		return nn.appendBlock(name)
 	}
 	return blockMetaArr, nil
 }
