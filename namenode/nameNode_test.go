@@ -1,7 +1,6 @@
 package namenode
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -90,7 +89,7 @@ func TestWriteFile(t *testing.T) {
 	}
 
 	for _, block := range tempBlkArr {
-		err := nn.Complete(string(block.name), string(block.addr))
+		err := nn.Complete(string(block.name), string(block.addr), 10)
 		if err != nil {
 			t.Errorf("error when Complete the file")
 			t.Log(err)
@@ -102,25 +101,14 @@ func TestWriteFile(t *testing.T) {
 		t.Errorf("error when writing to file")
 		t.Log(err)
 	}
-
 	allBlocksPending := true
-	allBlocksZero := true
-
 	for _, block := range blkArr {
 		if block.state != "pending" {
 			t.Errorf("error created block is not in pending state")
 			allBlocksPending = false
 		}
-		if block.fileSize != 0 {
-			t.Errorf("error created block size is not zero")
-			allBlocksZero = false
-		}
 	}
 	if allBlocksPending {
 		t.Logf("created blocks are in pending state")
 	}
-	if allBlocksZero {
-		t.Logf("created blocks have size zero")
-	}
-	fmt.Println(blkArr)
 }

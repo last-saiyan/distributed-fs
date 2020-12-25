@@ -147,11 +147,15 @@ func (nn *NameNode) WriteToFile(name string) ([]BlockMeta, error) {
 	if blockMetaArr[0].fileSize == nn.blockSize {
 		return nn.appendBlock(name)
 	}
+
+	for i := 0; i < len(blockMetaArr); i++ {
+		blockMetaArr[i].state = "pending"
+	}
 	return blockMetaArr, nil
 }
 
 // Complete is called when datanode completes
-func (nn *NameNode) Complete(blkName string, dataNodeAddr string, memory int) error {
+func (nn *NameNode) Complete(blkName string, dataNodeAddr string, fileSize int) error {
 	blockArr, found := nn.blockToLocation[blockName(blkName)]
 	if !found {
 		return ErrFileNotFound
@@ -159,6 +163,7 @@ func (nn *NameNode) Complete(blkName string, dataNodeAddr string, memory int) er
 	for i := 0; i < len(blockArr); i++ {
 		if blockArr[i].addr == ipAddr(dataNodeAddr) {
 			blockArr[i].state = "committed"
+			blockArr[i].fileSize = fileSize
 		}
 	}
 	// fmt.Println(blockArr, blkName)
