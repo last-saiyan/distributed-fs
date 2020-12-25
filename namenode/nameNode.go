@@ -56,8 +56,8 @@ func (nn *NameNode) Init(blockSize int, replicationFactor int) {
 	nn.replicationFactor = replicationFactor
 }
 
-// AddDataNode adds ip to list of datanodeList
-func (nn *NameNode) AddDataNode(meta DatanodeMeta) {
+// RegisterDataNode adds ip to list of datanodeList
+func (nn *NameNode) RegisterDataNode(meta DatanodeMeta) {
 	nn.datanodeList = append(nn.datanodeList, meta)
 }
 
@@ -148,4 +148,26 @@ func (nn *NameNode) WriteToFile(name string) ([]BlockMeta, error) {
 		return nn.appendBlock(name)
 	}
 	return blockMetaArr, nil
+}
+
+// Complete is called when datanode completes
+func (nn *NameNode) Complete(blkName string, dataNodeAddr string, memory int) error {
+	blockArr, found := nn.blockToLocation[blockName(blkName)]
+	if !found {
+		return ErrFileNotFound
+	}
+	for i := 0; i < len(blockArr); i++ {
+		if blockArr[i].addr == ipAddr(dataNodeAddr) {
+			blockArr[i].state = "committed"
+		}
+	}
+	// fmt.Println(blockArr, blkName)
+	return nil
+}
+
+// BlockReport is status that datanode sends periodically
+// based on this data namenode asks the datanode to
+// replicate, delete blocks
+func (nn *NameNode) BlockReport() {
+
 }
