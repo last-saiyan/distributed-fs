@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: datanode-statefulset
+spec:
+  selector:
+    matchLabels:
+      app: datanode
+  serviceName: datanode-service
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        app: datanode
+    spec:
+      containers:
+        - name: datanode
+          image: datanode
+          imagePullPolicy: Never
