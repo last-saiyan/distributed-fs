@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: namenode-statefulset
+spec:
+  selector:
+    matchLabels:
+      app: namenode
+  serviceName: namenode-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: namenode
+    spec:
+      containers:
+        - name: namenode
+          image: namenode
+          imagePullPolicy: Never
