@@ -1,8 +1,8 @@
 {
-    "BlockSize":1000,
-    "Replica":3,
-    "EditLog": "/editLog/log",
-    "DataDir": "/data",
+    "BlockSize": 1000,
+    "Replica": 3,
+    "EditLog": "editLog",
+    "DataDir": "data",
     "NameNodePort": 8001,
     "DataNodePort": 8010,
     "NameNodeHost": "enter namenode service host here"
