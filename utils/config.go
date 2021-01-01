@@ -11,8 +11,8 @@ import (
 // Config contains configuration
 type Config struct {
 	BlockSize    int
-	NameNodePort int
-	DataNodePort int
+	NameNodePort string
+	DataNodePort string
 	Replica      int
 	EditLog      string
 	DataDir      string

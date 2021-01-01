@@ -17,7 +17,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DfsClient interface {
-	GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocation, error)
+	GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocationArr, error)
 	RenewLock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*RenewalStatus, error)
 	CheckDataNode(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 	GetBlock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (Dfs_GetBlockClient, error)
@@ -31,8 +31,8 @@ func NewDfsClient(cc grpc.ClientConnInterface) DfsClient {
 	return &dfsClient{cc}
 }
 
-func (c *dfsClient) GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocation, error) {
-	out := new(FileLocation)
+func (c *dfsClient) GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocationArr, error) {
+	out := new(FileLocationArr)
 	err := c.cc.Invoke(ctx, "/proto.dfs/GetFileLocation", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (x *dfsGetBlockClient) Recv() (*File, error) {
 // All implementations must embed UnimplementedDfsServer
 // for forward compatibility
 type DfsServer interface {
-	GetFileLocation(context.Context, *FileName) (*FileLocation, error)
+	GetFileLocation(context.Context, *FileName) (*FileLocationArr, error)
 	RenewLock(context.Context, *FileName) (*RenewalStatus, error)
 	CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	GetBlock(*FileName, Dfs_GetBlockServer) error
@@ -105,7 +105,7 @@ type DfsServer interface {
 type UnimplementedDfsServer struct {
 }
 
-func (UnimplementedDfsServer) GetFileLocation(context.Context, *FileName) (*FileLocation, error) {
+func (UnimplementedDfsServer) GetFileLocation(context.Context, *FileName) (*FileLocationArr, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFileLocation not implemented")
 }
 func (UnimplementedDfsServer) RenewLock(context.Context, *FileName) (*RenewalStatus, error) {

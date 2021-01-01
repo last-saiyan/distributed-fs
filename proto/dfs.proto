@@ -7,7 +7,7 @@ option go_package = "dfs/proto";
 package proto;
 
 service dfs {
-  rpc GetFileLocation (FileName) returns (FileLocation);
+  rpc GetFileLocation (FileName) returns (FileLocationArr);
   rpc RenewLock(FileName) returns (RenewalStatus);
   rpc CheckDataNode(HealthCheckRequest) returns (HealthCheckResponse);
   rpc GetBlock (FileName) returns (stream File){};
@@ -15,7 +15,16 @@ service dfs {
 
 message FileLocation {
   string ipAddr = 3;
-  string chunkName = 2;
+  string blockName = 2;
+}
+
+message FileLocationArr {
+  repeated FileLocationReplica fileReplica = 1;
+}
+
+message FileLocationReplica {
+  int32 replica = 2;
+  repeated FileLocation location = 1;
 }
 
 message FileName {

@@ -1,6 +1,7 @@
 package namenode
 
 import (
+	"dfs/proto"
 	"sort"
 	"strconv"
 	"time"
@@ -106,9 +107,26 @@ func (nn *NameNode) appendBlock(name string) ([]BlockMeta, error) {
 	return blockMetaArr, nil
 }
 
-// GetFileLocation asdf
-func GetFileLocation(fileName string) map[string][]string {
-	return nil
+// GetFileLocation returns block names that consist a file
+func (nn *NameNode) GetFileLocation(file string) (*proto.FileLocationArr, error) {
+	blockArr, found := nn.fileToBlock[fileName(file)]
+	if !found {
+		return nil, ErrFileNotFound
+	}
+
+	replicaArr := make([]*proto.FileLocationReplica, 0)
+	for replicaIndex, blk := range blockArr {
+		blockMetaArr := nn.blockToLocation[blk.name]
+		fileLocationArr := make([]*proto.FileLocation, 0)
+		for _, blockMeta := range blockMetaArr {
+			// todo add check to see if datanode is up
+			fileLocation := &proto.FileLocation{BlockName: string(blockMeta.name), IpAddr: string(blockMeta.addr)}
+			fileLocationArr = append(fileLocationArr, fileLocation)
+		}
+		replica := &proto.FileLocationReplica{Replica: int32(replicaIndex), Location: fileLocationArr}
+		replicaArr = append(replicaArr, replica)
+	}
+	return &proto.FileLocationArr{FileReplica: replicaArr}, nil
 }
 
 // CreateFile todo ! research about this
