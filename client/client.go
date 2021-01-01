@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"dfs/proto"
+	"dfs/utils"
 	"fmt"
 	"io"
 	"log"
@@ -12,18 +13,25 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	address = "localhost:8001"
+var (
+	// address = "localhost:8001"
+	// address = "192.168.99.101:30007"
+	config  = utils.GetConfig()
+	address = config.NameNodeHost + ":" + config.NameNodePort
 )
 
 // Read a file
 // returns bytes of the file
 func Read(fileName string) []byte {
-	chunkName, ipAddr := getChunkName(fileName, proto.FileName_READ)
-	// assigning for testing purpose
-	chunkName = "temp/temp.txt"
-	ipAddr = address
-	return readBlock(chunkName, ipAddr)
+	fileLocation := getFileLocation(fileName, proto.FileName_READ)
+	firstReplica := fileLocation.FileReplica[0]
+	file := make([]byte, 0)
+	for _, block := range firstReplica.Location {
+		// todo handle failures here try other replicas
+		tempBlock := readBlock(block.BlockName, block.IpAddr)
+		file = append(file, tempBlock...)
+	}
+	return file
 }
 
 func readBlock(chunkName string, ipAddr string) []byte {
@@ -50,7 +58,7 @@ func readBlock(chunkName string, ipAddr string) []byte {
 	}
 }
 
-func getChunkName(fileName string, mode proto.FileName_Mode) (string, string) {
+func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocationArr {
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -63,7 +71,7 @@ func getChunkName(fileName string, mode proto.FileName_Mode) (string, string) {
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
-	return r.GetChunkName(), r.GetIpAddr()
+	return r
 }
 
 // Write a new file
