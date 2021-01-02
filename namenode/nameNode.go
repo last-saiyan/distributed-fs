@@ -83,7 +83,7 @@ func createBlockMeta(name blockName, addr ipAddr, fileSize int, state string) Bl
 }
 
 // appendBlock appends new block to the file returns BlockMeta array
-func (nn *NameNode) appendBlock(name string) ([]BlockMeta, error) {
+func (nn *NameNode) appendBlock(name string) (*proto.FileLocationArr, error) {
 	file := fileName(name)
 	blockArr, found := nn.fileToBlock[file]
 	if !found {
@@ -104,7 +104,7 @@ func (nn *NameNode) appendBlock(name string) ([]BlockMeta, error) {
 		blockMetaArr = append(blockMetaArr, blkMeta)
 	}
 	nn.blockToLocation[blkName] = blockMetaArr
-	return blockMetaArr, nil
+	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation, proto.FileName_WRITE), nil
 }
 
 // GetFileLocation returns block names that consist a file
@@ -114,23 +114,23 @@ func (nn *NameNode) GetFileLocation(file string) (*proto.FileLocationArr, error)
 		return nil, ErrFileNotFound
 	}
 
-	replicaArr := make([]*proto.FileLocationReplica, 0)
-	for replicaIndex, blk := range blockArr {
+	fileReplicasList := make([]*proto.BlockReplicaList, 0)
+	for _, blk := range blockArr {
 		blockMetaArr := nn.blockToLocation[blk.name]
-		fileLocationArr := make([]*proto.FileLocation, 0)
+		blockReplicasArr := make([]*proto.BlockLocation, 0)
 		for _, blockMeta := range blockMetaArr {
 			// todo add check to see if datanode is up
-			fileLocation := &proto.FileLocation{BlockName: string(blockMeta.name), IpAddr: string(blockMeta.addr)}
-			fileLocationArr = append(fileLocationArr, fileLocation)
+			blockLocation := &proto.BlockLocation{BlockName: string(blockMeta.name), IpAddr: string(blockMeta.addr)}
+			blockReplicasArr = append(blockReplicasArr, blockLocation)
 		}
-		replica := &proto.FileLocationReplica{Replica: int32(replicaIndex), Location: fileLocationArr}
-		replicaArr = append(replicaArr, replica)
+		blockReplicas := &proto.BlockReplicaList{BlockReplicaList: blockReplicasArr}
+		fileReplicasList = append(fileReplicasList, blockReplicas)
 	}
-	return &proto.FileLocationArr{FileReplica: replicaArr}, nil
+	return &proto.FileLocationArr{FileReplicasList: fileReplicasList}, nil
 }
 
 // CreateFile todo ! research about this
-func (nn *NameNode) CreateFile(name string) ([]BlockMeta, error) {
+func (nn *NameNode) CreateFile(name string) (*proto.FileLocationArr, error) {
 	file := fileName(name)
 	_, found := nn.fileToBlock[file]
 	if found {
@@ -148,7 +148,7 @@ func (nn *NameNode) CreateFile(name string) ([]BlockMeta, error) {
 }
 
 // WriteToFile returns datanode and block name
-func (nn *NameNode) WriteToFile(name string) ([]BlockMeta, error) {
+func (nn *NameNode) WriteToFile(name string) (*proto.FileLocationArr, error) {
 	file := fileName(name)
 	blockArr, found := nn.fileToBlock[file]
 	if !found {
@@ -169,7 +169,44 @@ func (nn *NameNode) WriteToFile(name string) ([]BlockMeta, error) {
 	for i := 0; i < len(blockMetaArr); i++ {
 		blockMetaArr[i].state = "pending"
 	}
-	return blockMetaArr, nil
+	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation, proto.FileName_WRITE), nil
+}
+
+// blockToLocation => blockToReplicaLocation
+func convertBlockMetaToProtoFileLocation(blockArr []Block, blockToLocation map[blockName][]BlockMeta, mode proto.FileName_Mode) *proto.FileLocationArr {
+	// if mode == proto.FileName_WRITE {
+	lastBlock := blockArr[len(blockArr)-1]
+	blockMetaArr := blockToLocation[lastBlock.name]
+	replicas := make([]*proto.BlockReplicaList, 0)
+
+	blockLocationReplicas := make([]*proto.BlockLocation, 0)
+	for _, blockMeta := range blockMetaArr {
+		// todo add check to see if datanode is up
+		blockLocation := &proto.BlockLocation{BlockName: string(blockMeta.name), IpAddr: string(blockMeta.addr)}
+		blockLocationReplicas = append(blockLocationReplicas, blockLocation)
+	}
+
+	replica := &proto.BlockReplicaList{BlockReplicaList: blockLocationReplicas}
+	replicas = append(replicas, replica)
+
+	return &proto.FileLocationArr{FileReplicasList: replicas}
+
+	// }
+
+	// replicaArr := make([]*proto.FileLocationReplica, 0)
+	// for replicaIndex, blk := range blockArr {
+	// 	blockMetaArr := blockToLocation[blk.name]
+	// 	fileLocationArr := make([]*proto.FileLocation, 0)
+	// 	for _, blockMeta := range blockMetaArr {
+	// 		// todo add check to see if datanode is up
+	// 		fileLocation := &proto.FileLocation{BlockName: string(blockMeta.name), IpAddr: string(blockMeta.addr)}
+	// 		fileLocationArr = append(fileLocationArr, fileLocation)
+	// 	}
+	// 	replica := &proto.FileLocationReplica{Replica: int32(replicaIndex), Location: fileLocationArr}
+	// 	replicaArr = append(replicaArr, replica)
+	// }
+	// return &proto.FileLocationArr{FileReplica: replicaArr}
+
 }
 
 // Complete is called when datanode completes

@@ -23,13 +23,18 @@ var (
 // Read a file
 // returns bytes of the file
 func Read(fileName string) []byte {
-	fileLocation := getFileLocation(fileName, proto.FileName_READ)
-	firstReplica := fileLocation.FileReplica[0]
+	fileLocationArr := getFileLocation(fileName, proto.FileName_READ)
+	blockList := fileLocationArr.FileReplicasList
+
 	file := make([]byte, 0)
-	for _, block := range firstReplica.Location {
-		// todo handle failures here try other replicas
-		tempBlock := readBlock(block.BlockName, block.IpAddr)
-		file = append(file, tempBlock...)
+	for _, blockReplicas := range blockList {
+		replicaList := blockReplicas.BlockReplicaList
+		for _, block := range replicaList {
+			// add retry here with arr
+			tempBlock := readBlock(block.BlockName, block.IpAddr)
+			file = append(file, tempBlock...)
+			break
+		}
 	}
 	return file
 }
@@ -78,7 +83,13 @@ func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocat
 // returns true if successful
 // returns false if error
 func Write(fileName string, data []byte) bool {
-	fmt.Print("read file")
+	fileLocation := getFileLocation(fileName, proto.FileName_WRITE)
+	fileBlocks := fileLocation.FileReplicasList
+	blockReplicas := fileBlocks[0]
+	for _, replica := range blockReplicas.BlockReplicaList {
+		fmt.Println(replica.IpAddr, "IpAddr")
+		fmt.Println(replica.BlockName, "BlockName")
+	}
 	return false
 }
 

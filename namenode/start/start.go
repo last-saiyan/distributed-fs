@@ -26,7 +26,7 @@ func (s *server) GetFileLocation(ctx context.Context, in *proto.FileName) (*prot
 	if proto.FileName_READ == in.Mode {
 		return nn.GetFileLocation(in.FileName)
 	} else if proto.FileName_WRITE == in.Mode {
-
+		return nn.WriteToFile(in.FileName)
 	}
 	return nil, nil
 }

@@ -13,18 +13,18 @@ service dfs {
   rpc GetBlock (FileName) returns (stream File){};
 }
 
-message FileLocation {
-  string ipAddr = 3;
+message BlockLocation {
+  string ipAddr = 1;
   string blockName = 2;
+  int32 blockSize = 3;
 }
 
 message FileLocationArr {
-  repeated FileLocationReplica fileReplica = 1;
+  repeated BlockReplicaList FileReplicasList = 1;
 }
 
-message FileLocationReplica {
-  int32 replica = 2;
-  repeated FileLocation location = 1;
+message BlockReplicaList {
+  repeated BlockLocation BlockReplicaList = 1;
 }
 
 message FileName {
