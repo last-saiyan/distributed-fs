@@ -2,8 +2,9 @@ package main
 
 import (
 	datanode "dfs/dataNode"
-	"dfs/namenode"
 	"dfs/proto"
+	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -19,7 +20,6 @@ type server struct {
 }
 
 func (s *server) GetBlock(in *proto.FileName, stream proto.Dfs_GetBlockServer) error {
-	namenode.GetFileLocation(in.FileName)
 	b := datanode.Block{}
 	b.InitBlock(in.FileName, "r", 500, 20)
 	for b.HasNextChunk() {
@@ -28,6 +28,31 @@ func (s *server) GetBlock(in *proto.FileName, stream proto.Dfs_GetBlockServer) e
 			return err
 		}
 		stream.Send(&proto.File{Content: (*chunk)[:n]})
+	}
+	return nil
+}
+
+func (s *server) WriteBlock(stream proto.Dfs_WriteBlockServer) error {
+
+	fileWriteStream, err := stream.Recv()
+	if err == io.EOF {
+		blockStatus := proto.BlockStatus{Success: false}
+		stream.SendAndClose(&blockStatus)
+	}
+	// use this for writepipeline
+	replicaList := fileWriteStream.BlockReplicaList.BlockReplicaList
+	fmt.Println(replicaList, "replicaList")
+	file := make([]byte, 0)
+	for {
+		fileWriteStream, err := stream.Recv()
+		if err == io.EOF {
+			fmt.Println("file", file)
+			blockStatus := proto.BlockStatus{Success: true}
+			stream.SendAndClose(&blockStatus)
+			break
+		}
+		content := fileWriteStream.File.Content
+		file = append(file, content...)
 	}
 	return nil
 }

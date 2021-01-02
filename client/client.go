@@ -79,6 +79,43 @@ func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocat
 	return r
 }
 
+func writeBlock(chunkName string, ipAddr string, data []byte, blockReplicaList *proto.BlockReplicaList) error {
+	conn, err := grpc.Dial(ipAddr, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := proto.NewDfsClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	// client := proto.Dfs_WriteBlockClient
+	writeBlockClient, err := c.WriteBlock(ctx)
+	if err != nil {
+		return err
+	}
+	sentDataLength := 0
+	chunkSize := 50
+	err = writeBlockClient.Send(&proto.FileWriteStream{BlockReplicaList: blockReplicaList})
+	if err != nil {
+		return err
+	}
+	for sentDataLength < len(data) {
+		max := (sentDataLength + chunkSize)
+		if max > len(data) {
+			max = len(data)
+		}
+		chunk := data[sentDataLength:max]
+		err = writeBlockClient.Send(&proto.FileWriteStream{File: &proto.File{Content: chunk}})
+		sentDataLength = chunkSize + sentDataLength
+	}
+	blockStatus, error := writeBlockClient.CloseAndRecv()
+	fmt.Println(blockStatus)
+	if error != nil {
+		return error
+	}
+	return nil
+}
+
 // Write a new file
 // returns true if successful
 // returns false if error

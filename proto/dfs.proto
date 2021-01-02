@@ -10,8 +10,14 @@ service dfs {
   rpc GetFileLocation (FileName) returns (FileLocationArr);
   rpc RenewLock(FileName) returns (RenewalStatus);
   rpc CheckDataNode(HealthCheckRequest) returns (HealthCheckResponse);
-  rpc GetBlock (FileName) returns (stream File){};
   rpc CreateFile (FileName) returns (FileLocationArr);
+  rpc GetBlock (FileName) returns (stream File){};
+  rpc WriteBlock (stream FileWriteStream) returns (BlockStatus){};
+}
+
+message FileWriteStream {
+  File file = 1;
+  BlockReplicaList BlockReplicaList = 2;
 }
 
 message BlockLocation {
@@ -42,6 +48,10 @@ message HealthCheckRequest {
 }
 
 message RenewalStatus {
+  bool success = 1;
+}
+
+message BlockStatus {
   bool success = 1;
 }
 
