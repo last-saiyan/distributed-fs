@@ -104,7 +104,7 @@ func (nn *NameNode) appendBlock(name string) (*proto.FileLocationArr, error) {
 		blockMetaArr = append(blockMetaArr, blkMeta)
 	}
 	nn.blockToLocation[blkName] = blockMetaArr
-	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation, proto.FileName_WRITE), nil
+	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation), nil
 }
 
 // GetFileLocation returns block names that consist a file
@@ -114,7 +114,7 @@ func (nn *NameNode) GetFileLocation(file string) (*proto.FileLocationArr, error)
 		return nil, ErrFileNotFound
 	}
 
-	fileReplicasList := make([]*proto.BlockReplicaList, 0)
+	fileBlocksList := make([]*proto.BlockReplicaList, 0)
 	for _, blk := range blockArr {
 		blockMetaArr := nn.blockToLocation[blk.name]
 		blockReplicasArr := make([]*proto.BlockLocation, 0)
@@ -124,9 +124,9 @@ func (nn *NameNode) GetFileLocation(file string) (*proto.FileLocationArr, error)
 			blockReplicasArr = append(blockReplicasArr, blockLocation)
 		}
 		blockReplicas := &proto.BlockReplicaList{BlockReplicaList: blockReplicasArr}
-		fileReplicasList = append(fileReplicasList, blockReplicas)
+		fileBlocksList = append(fileBlocksList, blockReplicas)
 	}
-	return &proto.FileLocationArr{FileReplicasList: fileReplicasList}, nil
+	return &proto.FileLocationArr{FileBlocksList: fileBlocksList}, nil
 }
 
 // CreateFile todo ! research about this
@@ -169,15 +169,14 @@ func (nn *NameNode) WriteToFile(name string) (*proto.FileLocationArr, error) {
 	for i := 0; i < len(blockMetaArr); i++ {
 		blockMetaArr[i].state = "pending"
 	}
-	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation, proto.FileName_WRITE), nil
+	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation), nil
 }
 
 // blockToLocation => blockToReplicaLocation
-func convertBlockMetaToProtoFileLocation(blockArr []Block, blockToLocation map[blockName][]BlockMeta, mode proto.FileName_Mode) *proto.FileLocationArr {
-	// if mode == proto.FileName_WRITE {
+func convertBlockMetaToProtoFileLocation(blockArr []Block, blockToLocation map[blockName][]BlockMeta) *proto.FileLocationArr {
 	lastBlock := blockArr[len(blockArr)-1]
 	blockMetaArr := blockToLocation[lastBlock.name]
-	replicas := make([]*proto.BlockReplicaList, 0)
+	fileBlocksList := make([]*proto.BlockReplicaList, 0)
 
 	blockLocationReplicas := make([]*proto.BlockLocation, 0)
 	for _, blockMeta := range blockMetaArr {
@@ -186,26 +185,10 @@ func convertBlockMetaToProtoFileLocation(blockArr []Block, blockToLocation map[b
 		blockLocationReplicas = append(blockLocationReplicas, blockLocation)
 	}
 
-	replica := &proto.BlockReplicaList{BlockReplicaList: blockLocationReplicas}
-	replicas = append(replicas, replica)
+	blockReplicas := &proto.BlockReplicaList{BlockReplicaList: blockLocationReplicas}
+	fileBlocksList = append(fileBlocksList, blockReplicas)
 
-	return &proto.FileLocationArr{FileReplicasList: replicas}
-
-	// }
-
-	// replicaArr := make([]*proto.FileLocationReplica, 0)
-	// for replicaIndex, blk := range blockArr {
-	// 	blockMetaArr := blockToLocation[blk.name]
-	// 	fileLocationArr := make([]*proto.FileLocation, 0)
-	// 	for _, blockMeta := range blockMetaArr {
-	// 		// todo add check to see if datanode is up
-	// 		fileLocation := &proto.FileLocation{BlockName: string(blockMeta.name), IpAddr: string(blockMeta.addr)}
-	// 		fileLocationArr = append(fileLocationArr, fileLocation)
-	// 	}
-	// 	replica := &proto.FileLocationReplica{Replica: int32(replicaIndex), Location: fileLocationArr}
-	// 	replicaArr = append(replicaArr, replica)
-	// }
-	// return &proto.FileLocationArr{FileReplica: replicaArr}
+	return &proto.FileLocationArr{FileBlocksList: fileBlocksList}
 
 }
 

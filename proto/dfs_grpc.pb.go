@@ -21,6 +21,7 @@ type DfsClient interface {
 	RenewLock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*RenewalStatus, error)
 	CheckDataNode(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 	GetBlock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (Dfs_GetBlockClient, error)
+	CreateFile(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocationArr, error)
 }
 
 type dfsClient struct {
@@ -90,6 +91,15 @@ func (x *dfsGetBlockClient) Recv() (*File, error) {
 	return m, nil
 }
 
+func (c *dfsClient) CreateFile(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocationArr, error) {
+	out := new(FileLocationArr)
+	err := c.cc.Invoke(ctx, "/proto.dfs/CreateFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DfsServer is the server API for Dfs service.
 // All implementations must embed UnimplementedDfsServer
 // for forward compatibility
@@ -98,6 +108,7 @@ type DfsServer interface {
 	RenewLock(context.Context, *FileName) (*RenewalStatus, error)
 	CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	GetBlock(*FileName, Dfs_GetBlockServer) error
+	CreateFile(context.Context, *FileName) (*FileLocationArr, error)
 	mustEmbedUnimplementedDfsServer()
 }
 
@@ -116,6 +127,9 @@ func (UnimplementedDfsServer) CheckDataNode(context.Context, *HealthCheckRequest
 }
 func (UnimplementedDfsServer) GetBlock(*FileName, Dfs_GetBlockServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetBlock not implemented")
+}
+func (UnimplementedDfsServer) CreateFile(context.Context, *FileName) (*FileLocationArr, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFile not implemented")
 }
 func (UnimplementedDfsServer) mustEmbedUnimplementedDfsServer() {}
 
@@ -205,6 +219,24 @@ func (x *dfsGetBlockServer) Send(m *File) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Dfs_CreateFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DfsServer).CreateFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.dfs/CreateFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DfsServer).CreateFile(ctx, req.(*FileName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Dfs_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.dfs",
 	HandlerType: (*DfsServer)(nil),
@@ -220,6 +252,10 @@ var _Dfs_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckDataNode",
 			Handler:    _Dfs_CheckDataNode_Handler,
+		},
+		{
+			MethodName: "CreateFile",
+			Handler:    _Dfs_CreateFile_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

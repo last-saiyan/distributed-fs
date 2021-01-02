@@ -31,6 +31,10 @@ func (s *server) GetFileLocation(ctx context.Context, in *proto.FileName) (*prot
 	return nil, nil
 }
 
+func (s *server) CreateFile(ctx context.Context, in *proto.FileName) (*proto.FileLocationArr, error) {
+	return nn.CreateFile(in.FileName)
+}
+
 func (s *server) RenewLock(ctx context.Context, in *proto.FileName) (*proto.RenewalStatus, error) {
 	println(in.FileName)
 	nn.GetFileLocation(in.FileName)

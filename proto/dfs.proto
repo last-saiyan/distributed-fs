@@ -11,6 +11,7 @@ service dfs {
   rpc RenewLock(FileName) returns (RenewalStatus);
   rpc CheckDataNode(HealthCheckRequest) returns (HealthCheckResponse);
   rpc GetBlock (FileName) returns (stream File){};
+  rpc CreateFile (FileName) returns (FileLocationArr);
 }
 
 message BlockLocation {
@@ -20,7 +21,7 @@ message BlockLocation {
 }
 
 message FileLocationArr {
-  repeated BlockReplicaList FileReplicasList = 1;
+  repeated BlockReplicaList FileBlocksList = 1;
 }
 
 message BlockReplicaList {

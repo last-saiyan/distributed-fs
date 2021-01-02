@@ -24,7 +24,7 @@ var (
 // returns bytes of the file
 func Read(fileName string) []byte {
 	fileLocationArr := getFileLocation(fileName, proto.FileName_READ)
-	blockList := fileLocationArr.FileReplicasList
+	blockList := fileLocationArr.FileBlocksList
 
 	file := make([]byte, 0)
 	for _, blockReplicas := range blockList {
@@ -84,7 +84,7 @@ func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocat
 // returns false if error
 func Write(fileName string, data []byte) bool {
 	fileLocation := getFileLocation(fileName, proto.FileName_WRITE)
-	fileBlocks := fileLocation.FileReplicasList
+	fileBlocks := fileLocation.FileBlocksList
 	blockReplicas := fileBlocks[0]
 	for _, replica := range blockReplicas.BlockReplicaList {
 		fmt.Println(replica.IpAddr, "IpAddr")
@@ -122,4 +122,32 @@ func renewLock(file string) {
 	} else {
 		log.Printf("was not able to renew lease")
 	}
+}
+
+func createFileNameNode(fileName string) *proto.FileLocationArr {
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := proto.NewDfsClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.GetFileLocation(ctx, &proto.FileName{FileName: fileName})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	return r
+}
+
+// CreateFile creates a file
+func CreateFile(file string) error {
+	fileLocation := createFileNameNode(file)
+	fileBlocks := fileLocation.FileBlocksList
+	blockReplicas := fileBlocks[0]
+	for _, replica := range blockReplicas.BlockReplicaList {
+		fmt.Println(replica.IpAddr, "IpAddr")
+		fmt.Println(replica.BlockName, "BlockName")
+	}
+	return nil
 }
