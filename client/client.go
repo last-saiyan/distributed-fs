@@ -182,6 +182,7 @@ func CreateFile(file string) error {
 	fileLocation := createFileNameNode(file)
 	fileBlocks := fileLocation.FileBlocksList
 	blockReplicas := fileBlocks[0]
+	writeBlock(file, blockReplicas.BlockReplicaList[0].IpAddr, make([]byte, 0), blockReplicas)
 	for _, replica := range blockReplicas.BlockReplicaList {
 		fmt.Println(replica.IpAddr, "IpAddr")
 		fmt.Println(replica.BlockName, "BlockName")

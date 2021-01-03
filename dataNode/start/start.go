@@ -21,7 +21,7 @@ type server struct {
 
 func (s *server) GetBlock(in *proto.FileName, stream proto.Dfs_GetBlockServer) error {
 	b := datanode.Block{}
-	b.InitBlock(in.FileName, "r", 500, 20)
+	b.InitBlock(in.FileName, "r")
 	for b.HasNextChunk() {
 		chunk, n, err := b.GetNextChunk()
 		if err != nil {
@@ -29,29 +29,39 @@ func (s *server) GetBlock(in *proto.FileName, stream proto.Dfs_GetBlockServer) e
 		}
 		stream.Send(&proto.File{Content: (*chunk)[:n]})
 	}
+	b.Close()
 	return nil
 }
 
 func (s *server) WriteBlock(stream proto.Dfs_WriteBlockServer) error {
-
+	b := datanode.Block{}
 	fileWriteStream, err := stream.Recv()
 	if err == io.EOF {
 		blockStatus := proto.BlockStatus{Success: false}
 		stream.SendAndClose(&blockStatus)
 	}
 	// use this for writepipeline
-	replicaList := fileWriteStream.BlockReplicaList.BlockReplicaList
-	fmt.Println(replicaList, "replicaList")
+	// replicaList := fileWriteStream.BlockReplicaList.BlockReplicaList
+	// fmt.Println(replicaList, "replicaList")
+	fileName := fileWriteStream.BlockReplicaList.BlockReplicaList[0].BlockName
+	b.InitBlock(fileName, "w")
+	fmt.Println(fileWriteStream, "fileWriteStream")
 	file := make([]byte, 0)
 	for {
 		fileWriteStream, err := stream.Recv()
 		if err == io.EOF {
-			fmt.Println("file", file)
+			fmt.Println("file", string(file))
+			b.Close()
 			blockStatus := proto.BlockStatus{Success: true}
 			stream.SendAndClose(&blockStatus)
 			break
 		}
 		content := fileWriteStream.File.Content
+		err = b.WriteChunk(content)
+		if err != nil {
+			blockStatus := proto.BlockStatus{Success: false}
+			stream.SendAndClose(&blockStatus)
+		}
 		file = append(file, content...)
 	}
 	return nil

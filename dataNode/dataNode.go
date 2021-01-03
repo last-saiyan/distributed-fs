@@ -2,6 +2,7 @@ package datanode
 
 import (
 	"bufio"
+	"dfs/utils"
 	"io"
 	"log"
 	"os"
@@ -19,8 +20,10 @@ type Block struct {
 	blockSize int
 }
 
+var config = utils.GetConfig()
+
 // InitBlock initilizes the struct with necessary details
-func (b *Block) InitBlock(blockName string, mode string, blockSize int, chunkSize int) {
+func (b *Block) InitBlock(blockName string, mode string) {
 	var file *os.File
 	var err error
 	var reader *bufio.Reader
@@ -36,8 +39,8 @@ func (b *Block) InitBlock(blockName string, mode string, blockSize int, chunkSiz
 	b.file = file
 	b.blockName = blockName
 	b.reader = reader
-	b.chunkSize = chunkSize
-	b.blockSize = blockSize
+	b.chunkSize = config.IoSize
+	b.blockSize = config.BlockSize
 	buffer := make([]byte, b.chunkSize)
 	b.buffer = &buffer
 	b.dataRead = -1
@@ -72,32 +75,26 @@ func (b *Block) GetNextChunk() (*[]byte, int, error) {
 	return b.buffer, n, nil
 }
 
-func (b *Block) writeChunk(chunk []byte) (int, error) {
+// WriteChunk writes given chunk
+func (b *Block) WriteChunk(chunk []byte) error {
 	finfo, err := b.file.Stat()
 	if err != nil {
 		log.Fatal("cannot open the file: ", err)
 	}
 	currBlockSize := int(finfo.Size())
-
-	if b.blockSize < (len(chunk) + currBlockSize) {
-		n, err := b.file.Write(chunk)
+	if b.blockSize >= (len(chunk) + currBlockSize) {
+		_, err := b.file.Write(chunk)
 		if err != nil {
 			log.Fatal("cannot write to file: ", err)
 		}
-		return n, nil
+		return nil
 	}
-	if b.blockSize < currBlockSize {
-		return -1, nil
-	}
-	if b.blockSize == currBlockSize {
-		return 0, nil
-	}
-	capacity := (b.blockSize - currBlockSize)
-	n, err := b.file.Write(chunk[:capacity])
-	if err != nil {
-		log.Fatal("cannot open image file: ", err)
-	}
-	return n, nil
+	return ErrFileExceedsBlockSize
+}
+
+// Close is used to close the file
+func (b *Block) Close() error {
+	return b.file.Close()
 }
 
 // storageid, blockreport, commit, handshake
