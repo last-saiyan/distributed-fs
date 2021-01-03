@@ -13,6 +13,16 @@ service dfs {
   rpc CreateFile (FileName) returns (FileLocationArr);
   rpc GetBlock (FileName) returns (stream File){};
   rpc WriteBlock (stream FileWriteStream) returns (BlockStatus){};
+  rpc RegisterDataNode (RegisterDataNodeReq) returns (RegisterStatus);
+}
+
+message RegisterDataNodeReq {
+  bool new = 1;
+  int32 DiskUsage = 2;
+}
+
+message RegisterStatus {
+  bool status =1;
 }
 
 message FileWriteStream {

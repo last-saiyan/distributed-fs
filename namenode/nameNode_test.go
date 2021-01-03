@@ -16,13 +16,13 @@ func TestCreateFile(t *testing.T) {
 	}
 
 	// adding datanodes
-	dn := DatanodeMeta{Addr: "123", DiskUsage: 23}
+	dn := DatanodeMeta{IPAddr: "123", DiskUsage: 23}
 	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{Addr: "234", DiskUsage: 3}
+	dn = DatanodeMeta{IPAddr: "234", DiskUsage: 3}
 	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{Addr: "122", DiskUsage: 53}
+	dn = DatanodeMeta{IPAddr: "122", DiskUsage: 53}
 	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{Addr: "121", DiskUsage: 28}
+	dn = DatanodeMeta{IPAddr: "121", DiskUsage: 28}
 	nn.RegisterDataNode(dn)
 	blkArr, err = nn.CreateFile(fileName)
 	if err != nil {
@@ -61,13 +61,13 @@ func TestCreateFile(t *testing.T) {
 func TestWriteFile(t *testing.T) {
 	nn := NameNode{}
 	nn.Init(1000, 3)
-	dn := DatanodeMeta{Addr: "123", DiskUsage: 23}
+	dn := DatanodeMeta{IPAddr: "123", DiskUsage: 23}
 	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{Addr: "234", DiskUsage: 3}
+	dn = DatanodeMeta{IPAddr: "234", DiskUsage: 3}
 	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{Addr: "122", DiskUsage: 53}
+	dn = DatanodeMeta{IPAddr: "122", DiskUsage: 53}
 	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{Addr: "121", DiskUsage: 28}
+	dn = DatanodeMeta{IPAddr: "121", DiskUsage: 28}
 	nn.RegisterDataNode(dn)
 	fileName := "testFile"
 
@@ -88,7 +88,7 @@ func TestWriteFile(t *testing.T) {
 		t.Errorf("error able to write to a pending file")
 	}
 
-	for _, block := range tempBlkArr {
+	for _, block := range tempBlkArr.FileBlocksList {
 		err := nn.Complete(string(block.name), string(block.addr), 10)
 		if err != nil {
 			t.Errorf("error when Complete the file")
@@ -102,7 +102,7 @@ func TestWriteFile(t *testing.T) {
 		t.Log(err)
 	}
 	allBlocksPending := true
-	for _, block := range blkArr {
+	for _, block := range blkArr.FileBlocksList {
 		if block.state != "pending" {
 			t.Errorf("error created block is not in pending state")
 			allBlocksPending = false

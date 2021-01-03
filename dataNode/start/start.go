@@ -1,18 +1,23 @@
 package main
 
 import (
+	"context"
 	datanode "dfs/dataNode"
 	"dfs/proto"
+	"dfs/utils"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
 )
 
-const (
-	port = ":8010"
+var (
+	config          = utils.GetConfig()
+	port            = ":" + config.DataNodePort
+	nameNodeHostURL = "http://" + config.NameNodeHost + ":" + config.NameNodePort
 )
 
 type server struct {
@@ -67,14 +72,40 @@ func (s *server) WriteBlock(stream proto.Dfs_WriteBlockServer) error {
 	return nil
 }
 
+func registerDataNode() error {
+	fmt.Println("hwllo world")
+	conn, err := grpc.Dial(nameNodeHostURL, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+		return err
+	}
+	defer conn.Close()
+	c := proto.NewDfsClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	registerStatus, err := c.RegisterDataNode(ctx, &proto.RegisterDataNodeReq{New: true})
+	if err != nil {
+		log.Fatalf("did not register: %v", err)
+		return err
+	}
+	fmt.Println(registerStatus, "registerStatus")
+	return nil
+}
+
 func main() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
+	err = registerDataNode()
+	if err != nil {
+		log.Fatalf("failed to regester to namenode: %v", err)
+	}
 	proto.RegisterDfsServer(s, &server{})
-	if err := s.Serve(lis); err != nil {
+	err = s.Serve(lis)
+	if err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }

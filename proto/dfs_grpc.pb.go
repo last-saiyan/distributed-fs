@@ -23,6 +23,7 @@ type DfsClient interface {
 	CreateFile(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocationArr, error)
 	GetBlock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (Dfs_GetBlockClient, error)
 	WriteBlock(ctx context.Context, opts ...grpc.CallOption) (Dfs_WriteBlockClient, error)
+	RegisterDataNode(ctx context.Context, in *RegisterDataNodeReq, opts ...grpc.CallOption) (*RegisterStatus, error)
 }
 
 type dfsClient struct {
@@ -135,6 +136,15 @@ func (x *dfsWriteBlockClient) CloseAndRecv() (*BlockStatus, error) {
 	return m, nil
 }
 
+func (c *dfsClient) RegisterDataNode(ctx context.Context, in *RegisterDataNodeReq, opts ...grpc.CallOption) (*RegisterStatus, error) {
+	out := new(RegisterStatus)
+	err := c.cc.Invoke(ctx, "/proto.dfs/RegisterDataNode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DfsServer is the server API for Dfs service.
 // All implementations must embed UnimplementedDfsServer
 // for forward compatibility
@@ -145,6 +155,7 @@ type DfsServer interface {
 	CreateFile(context.Context, *FileName) (*FileLocationArr, error)
 	GetBlock(*FileName, Dfs_GetBlockServer) error
 	WriteBlock(Dfs_WriteBlockServer) error
+	RegisterDataNode(context.Context, *RegisterDataNodeReq) (*RegisterStatus, error)
 	mustEmbedUnimplementedDfsServer()
 }
 
@@ -169,6 +180,9 @@ func (UnimplementedDfsServer) GetBlock(*FileName, Dfs_GetBlockServer) error {
 }
 func (UnimplementedDfsServer) WriteBlock(Dfs_WriteBlockServer) error {
 	return status.Errorf(codes.Unimplemented, "method WriteBlock not implemented")
+}
+func (UnimplementedDfsServer) RegisterDataNode(context.Context, *RegisterDataNodeReq) (*RegisterStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterDataNode not implemented")
 }
 func (UnimplementedDfsServer) mustEmbedUnimplementedDfsServer() {}
 
@@ -302,6 +316,24 @@ func (x *dfsWriteBlockServer) Recv() (*FileWriteStream, error) {
 	return m, nil
 }
 
+func _Dfs_RegisterDataNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterDataNodeReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DfsServer).RegisterDataNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.dfs/RegisterDataNode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DfsServer).RegisterDataNode(ctx, req.(*RegisterDataNodeReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Dfs_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.dfs",
 	HandlerType: (*DfsServer)(nil),
@@ -321,6 +353,10 @@ var _Dfs_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateFile",
 			Handler:    _Dfs_CreateFile_Handler,
+		},
+		{
+			MethodName: "RegisterDataNode",
+			Handler:    _Dfs_RegisterDataNode_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

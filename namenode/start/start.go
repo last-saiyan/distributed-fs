@@ -5,8 +5,11 @@ import (
 	namenode "dfs/namenode"
 	"dfs/proto"
 	"dfs/utils"
+	"fmt"
 	"log"
 	"net"
+
+	"google.golang.org/grpc/peer"
 
 	"google.golang.org/grpc"
 )
@@ -29,6 +32,13 @@ func (s *server) GetFileLocation(ctx context.Context, in *proto.FileName) (*prot
 		return nn.WriteToFile(in.FileName)
 	}
 	return nil, nil
+}
+
+func (s *server) RegisterDataNode(ctx context.Context, datanode *proto.RegisterDataNodeReq) (*proto.RegisterStatus, error) {
+	dataNodePeer, _ := peer.FromContext(ctx)
+	nn.RegisterDataNode(namenode.DatanodeMeta{IPAddr: dataNodePeer.Addr.String(), DiskUsage: int(datanode.DiskUsage)})
+	fmt.Println(dataNodePeer.Addr.String(), "ipAdddr")
+	return &proto.RegisterStatus{Status: true}, nil
 }
 
 func (s *server) CreateFile(ctx context.Context, in *proto.FileName) (*proto.FileLocationArr, error) {
