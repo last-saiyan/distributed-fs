@@ -5,6 +5,6 @@
     "DataDir": "data",
     "NameNodePort": 8001,
     "DataNodePort": 8010,
-    "NameNodeHost": "enter namenode service host here",
+    "NameNodeHost": "namenode-statefulset-0.namenode-service.default.svc.cluster.local",
     "IoSize": 100
 }
