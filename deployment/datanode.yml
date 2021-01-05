@@ -17,3 +17,5 @@ spec:
         - name: datanode
           image: datanode
           imagePullPolicy: Never
+          ports:
+            - containerPort: 8010

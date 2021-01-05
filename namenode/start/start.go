@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	dataNodePort = utils.GetConfig().DataNodePort
+	nameNodePort = utils.GetConfig().NameNodePort
 	blockSize    = utils.GetConfig().BlockSize
 	replicaCount = utils.GetConfig().Replica
 	nn           = namenode.NameNode{}
@@ -26,7 +26,11 @@ type server struct {
 }
 
 func (s *server) GetFileLocation(ctx context.Context, in *proto.FileName) (*proto.FileLocationArr, error) {
+	fmt.Println("getfile")
+
 	if proto.FileName_READ == in.Mode {
+		fmt.Println("getfile")
+
 		return nn.GetFileLocation(in.FileName)
 	} else if proto.FileName_WRITE == in.Mode {
 		return nn.WriteToFile(in.FileName)
@@ -52,8 +56,9 @@ func (s *server) RenewLock(ctx context.Context, in *proto.FileName) (*proto.Rene
 }
 
 func main() {
+	nn.Init(blockSize, replicaCount)
 	utils.GetConfig()
-	lis, err := net.Listen("tcp", dataNodePort)
+	lis, err := net.Listen("tcp", nameNodePort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -62,5 +67,4 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-	nn.Init(blockSize, replicaCount)
 }

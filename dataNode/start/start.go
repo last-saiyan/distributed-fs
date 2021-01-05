@@ -16,8 +16,8 @@ import (
 
 var (
 	config          = utils.GetConfig()
-	port            = ":" + config.DataNodePort
-	nameNodeHostURL = "http://" + config.NameNodeHost + ":" + config.NameNodePort
+	port            = config.DataNodePort
+	nameNodeHostURL = config.NameNodeHost + config.NameNodePort
 )
 
 type server struct {
@@ -73,7 +73,6 @@ func (s *server) WriteBlock(stream proto.Dfs_WriteBlockServer) error {
 }
 
 func registerDataNode() error {
-	fmt.Println("hwllo world")
 	conn, err := grpc.Dial(nameNodeHostURL, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)

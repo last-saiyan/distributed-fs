@@ -14,10 +14,8 @@ import (
 )
 
 var (
-	// address = "localhost:8001"
-	// address = "192.168.99.101:30007"
 	config  = utils.GetConfig()
-	address = config.NameNodeHost + ":" + config.NameNodePort
+	address = config.NameNodeHost + config.NameNodePort
 )
 
 // Read a file
@@ -64,10 +62,14 @@ func readBlock(chunkName string, ipAddr string) []byte {
 }
 
 func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocationArr {
+	fmt.Println("asdfasdf")
+
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+	fmt.Println("asdfasdf")
+
 	defer conn.Close()
 	c := proto.NewDfsClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

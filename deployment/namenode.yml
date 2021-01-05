@@ -17,3 +17,5 @@ spec:
         - name: namenode
           image: namenode
           imagePullPolicy: Never
+          ports:
+            - containerPort: 8001
