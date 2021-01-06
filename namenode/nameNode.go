@@ -29,7 +29,7 @@ type fileName string
 // DatanodeMeta metadata of datanode
 type DatanodeMeta struct {
 	IPAddr    string
-	DiskUsage int
+	DiskUsage uint64
 }
 
 // NameNode struct to interact with the namenode

@@ -18,7 +18,7 @@ service dfs {
 
 message RegisterDataNodeReq {
   bool new = 1;
-  int32 DiskUsage = 2;
+  uint64 DiskUsage = 2;
 }
 
 message RegisterStatus {

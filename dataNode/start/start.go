@@ -83,7 +83,7 @@ func registerDataNode() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	registerStatus, err := c.RegisterDataNode(ctx, &proto.RegisterDataNodeReq{New: true})
+	registerStatus, err := c.RegisterDataNode(ctx, &proto.RegisterDataNodeReq{New: true, DiskUsage: utils.DiskUsage(utils.GetConfig().DataDir)})
 	if err != nil {
 		log.Fatalf("did not register: %v", err)
 		return err

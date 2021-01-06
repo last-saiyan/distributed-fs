@@ -40,7 +40,7 @@ func (s *server) GetFileLocation(ctx context.Context, in *proto.FileName) (*prot
 
 func (s *server) RegisterDataNode(ctx context.Context, datanode *proto.RegisterDataNodeReq) (*proto.RegisterStatus, error) {
 	dataNodePeer, _ := peer.FromContext(ctx)
-	nn.RegisterDataNode(namenode.DatanodeMeta{IPAddr: dataNodePeer.Addr.String(), DiskUsage: int(datanode.DiskUsage)})
+	nn.RegisterDataNode(namenode.DatanodeMeta{IPAddr: dataNodePeer.Addr.String(), DiskUsage: datanode.DiskUsage})
 	fmt.Println(dataNodePeer.Addr.String(), "ipAdddr")
 	return &proto.RegisterStatus{Status: true}, nil
 }

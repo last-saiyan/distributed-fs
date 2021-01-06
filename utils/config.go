@@ -32,9 +32,6 @@ func GetConfig() Config {
 	}
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
-	err = CreateDir(config.DataDir)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	CreateDir(config.DataDir)
 	return config
 }
