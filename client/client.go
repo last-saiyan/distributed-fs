@@ -14,12 +14,15 @@ import (
 )
 
 var (
-	config  = utils.GetConfig()
-	address = config.NameNodeHost + config.NameNodePort
+	config       = utils.GetConfig()
+	address      = config.NameNodeHost + config.NameNodePort
+	datanodePort = config.DataNodePort
+	blockSize    = config.BlockSize
 )
 
 // Read a file
 // returns bytes of the file
+// todo add offset
 func Read(fileName string) []byte {
 	fileLocationArr := getFileLocation(fileName, proto.FileName_READ)
 	blockList := fileLocationArr.FileBlocksList
@@ -38,7 +41,7 @@ func Read(fileName string) []byte {
 }
 
 func readBlock(chunkName string, ipAddr string) []byte {
-	conn, err := grpc.Dial(ipAddr, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(ipAddr+datanodePort, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -62,14 +65,10 @@ func readBlock(chunkName string, ipAddr string) []byte {
 }
 
 func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocationArr {
-	fmt.Println("asdfasdf")
-
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	fmt.Println("asdfasdf")
-
 	defer conn.Close()
 	c := proto.NewDfsClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -82,7 +81,7 @@ func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocat
 }
 
 func writeBlock(chunkName string, ipAddr string, data []byte, blockReplicaList *proto.BlockReplicaList) error {
-	conn, err := grpc.Dial(ipAddr, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(ipAddr+datanodePort, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -122,13 +121,16 @@ func writeBlock(chunkName string, ipAddr string, data []byte, blockReplicaList *
 // returns true if successful
 // returns false if error
 func Write(fileName string, data []byte) bool {
-	fileLocation := getFileLocation(fileName, proto.FileName_WRITE)
-	fileBlocks := fileLocation.FileBlocksList
-	blockReplicas := fileBlocks[0]
-	writeBlock(fileName, blockReplicas.BlockReplicaList[0].IpAddr, make([]byte, 0), blockReplicas)
-	for _, replica := range blockReplicas.BlockReplicaList {
-		fmt.Println(replica.IpAddr, "IpAddr")
-		fmt.Println(replica.BlockName, "BlockName")
+	for len(data) > 0 {
+		fileLocation := getFileLocation(fileName, proto.FileName_WRITE)
+		blockReplicas := fileLocation.FileBlocksList[0]
+		blockCapacity := blockSize - blockReplicas.BlockReplicaList[0].BlockSize
+		limit := int64(len(data))
+		if blockCapacity > int64(len(data)) {
+			limit = blockCapacity
+		}
+		writeBlock(fileName, blockReplicas.BlockReplicaList[0].IpAddr, data[0:limit], blockReplicas)
+		data = data[limit:len(data)]
 	}
 	return false
 }

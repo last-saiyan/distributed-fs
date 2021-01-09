@@ -10,7 +10,7 @@ import (
 
 // Config contains configuration
 type Config struct {
-	BlockSize    int
+	BlockSize    int64
 	Replica      int
 	IoSize       int
 	NameNodePort string

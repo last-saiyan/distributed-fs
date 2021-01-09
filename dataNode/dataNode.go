@@ -17,7 +17,7 @@ type Block struct {
 	buffer    *[]byte
 	dataRead  int
 	file      *os.File
-	blockSize int
+	blockSize int64
 }
 
 var config = utils.GetConfig()
@@ -81,8 +81,8 @@ func (b *Block) WriteChunk(chunk []byte) error {
 	if err != nil {
 		log.Fatal("cannot open the file: ", err)
 	}
-	currBlockSize := int(finfo.Size())
-	if b.blockSize >= (len(chunk) + currBlockSize) {
+	currBlockSize := finfo.Size()
+	if b.blockSize >= (int64(len(chunk)) + currBlockSize) {
 		_, err := b.file.Write(chunk)
 		if err != nil {
 			log.Fatal("cannot write to file: ", err)

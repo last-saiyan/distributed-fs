@@ -33,7 +33,7 @@ message FileWriteStream {
 message BlockLocation {
   string ipAddr = 1;
   string blockName = 2;
-  int32 blockSize = 3;
+  int64 blockSize = 3;
 }
 
 message FileLocationArr {
