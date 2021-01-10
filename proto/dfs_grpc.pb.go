@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 type DfsClient interface {
 	GetFileLocation(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocationArr, error)
 	RenewLock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*RenewalStatus, error)
-	CheckDataNode(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
+	DatanodeHeartbeat(ctx context.Context, in *Heartbeat, opts ...grpc.CallOption) (*DatanodeOperation, error)
 	CreateFile(ctx context.Context, in *FileName, opts ...grpc.CallOption) (*FileLocationArr, error)
 	GetBlock(ctx context.Context, in *FileName, opts ...grpc.CallOption) (Dfs_GetBlockClient, error)
 	WriteBlock(ctx context.Context, opts ...grpc.CallOption) (Dfs_WriteBlockClient, error)
@@ -52,9 +52,9 @@ func (c *dfsClient) RenewLock(ctx context.Context, in *FileName, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *dfsClient) CheckDataNode(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
-	out := new(HealthCheckResponse)
-	err := c.cc.Invoke(ctx, "/proto.dfs/CheckDataNode", in, out, opts...)
+func (c *dfsClient) DatanodeHeartbeat(ctx context.Context, in *Heartbeat, opts ...grpc.CallOption) (*DatanodeOperation, error) {
+	out := new(DatanodeOperation)
+	err := c.cc.Invoke(ctx, "/proto.dfs/DatanodeHeartbeat", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (c *dfsClient) RegisterDataNode(ctx context.Context, in *RegisterDataNodeRe
 type DfsServer interface {
 	GetFileLocation(context.Context, *FileName) (*FileLocationArr, error)
 	RenewLock(context.Context, *FileName) (*RenewalStatus, error)
-	CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
+	DatanodeHeartbeat(context.Context, *Heartbeat) (*DatanodeOperation, error)
 	CreateFile(context.Context, *FileName) (*FileLocationArr, error)
 	GetBlock(*FileName, Dfs_GetBlockServer) error
 	WriteBlock(Dfs_WriteBlockServer) error
@@ -169,8 +169,8 @@ func (UnimplementedDfsServer) GetFileLocation(context.Context, *FileName) (*File
 func (UnimplementedDfsServer) RenewLock(context.Context, *FileName) (*RenewalStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RenewLock not implemented")
 }
-func (UnimplementedDfsServer) CheckDataNode(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckDataNode not implemented")
+func (UnimplementedDfsServer) DatanodeHeartbeat(context.Context, *Heartbeat) (*DatanodeOperation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DatanodeHeartbeat not implemented")
 }
 func (UnimplementedDfsServer) CreateFile(context.Context, *FileName) (*FileLocationArr, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateFile not implemented")
@@ -233,20 +233,20 @@ func _Dfs_RenewLock_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Dfs_CheckDataNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HealthCheckRequest)
+func _Dfs_DatanodeHeartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Heartbeat)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DfsServer).CheckDataNode(ctx, in)
+		return srv.(DfsServer).DatanodeHeartbeat(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.dfs/CheckDataNode",
+		FullMethod: "/proto.dfs/DatanodeHeartbeat",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DfsServer).CheckDataNode(ctx, req.(*HealthCheckRequest))
+		return srv.(DfsServer).DatanodeHeartbeat(ctx, req.(*Heartbeat))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -347,8 +347,8 @@ var _Dfs_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Dfs_RenewLock_Handler,
 		},
 		{
-			MethodName: "CheckDataNode",
-			Handler:    _Dfs_CheckDataNode_Handler,
+			MethodName: "DatanodeHeartbeat",
+			Handler:    _Dfs_DatanodeHeartbeat_Handler,
 		},
 		{
 			MethodName: "CreateFile",

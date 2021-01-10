@@ -10,14 +10,16 @@ import (
 
 // Config contains configuration
 type Config struct {
-	BlockSize    int64
-	Replica      int
-	IoSize       int
-	NameNodePort string
-	DataNodePort string
-	EditLog      string
-	DataDir      string
-	NameNodeHost string
+	BlockSize         int64
+	Replica           int
+	IoSize            int
+	NameNodePort      string
+	DataNodePort      string
+	EditLog           string
+	DataDir           string
+	NameNodeHost      string
+	HeartbeatInterval int
+	HeartbeatTimeout  int
 }
 
 // GetConfig parses config.json and returns

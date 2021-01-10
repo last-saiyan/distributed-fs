@@ -2,6 +2,7 @@ package namenode
 
 import (
 	"dfs/proto"
+	"dfs/utils"
 	"sort"
 	"strconv"
 	"time"
@@ -25,9 +26,18 @@ type replicaMeta struct {
 
 // DatanodeMeta metadata of datanode
 type DatanodeMeta struct {
-	IPAddr    string
-	DiskUsage uint64
+	IPAddr             string
+	DiskUsage          uint64
+	heartbeatTimeStamp int64
+	status             datanodeStatus
 }
+
+type datanodeStatus = string
+
+const (
+	datanodeDown = datanodeStatus("datanodeDown")
+	datanodeUp   = datanodeStatus("datanodeUp")
+)
 
 // NameNode struct to interact with the namenode
 type NameNode struct {
@@ -53,10 +63,13 @@ func (nn *NameNode) Init(blockSize int, replicationFactor int) {
 	nn.blockToLocation = make(map[string][]replicaMeta)
 	nn.blockSize = blockSize
 	nn.replicationFactor = replicationFactor
+	nn.heartbeatMonitor()
 }
 
 // RegisterDataNode adds ip to list of datanodeList
-func (nn *NameNode) RegisterDataNode(meta DatanodeMeta) {
+func (nn *NameNode) RegisterDataNode(datanodeIPAddr string, diskUsage uint64) {
+	meta := DatanodeMeta{IPAddr: datanodeIPAddr, DiskUsage: diskUsage, heartbeatTimeStamp: time.Now().Unix(), status: datanodeUp}
+	// meta.heartbeatTimeStamp = time.Now().Unix()
 	nn.datanodeList = append(nn.datanodeList, meta)
 }
 
@@ -210,4 +223,27 @@ func (nn *NameNode) Complete(blkName string, dataNodeAddr string, fileSize int) 
 // replicate, delete blocks
 func (nn *NameNode) BlockReport() {
 
+}
+
+// Heartbeat is called when namenode receives heartbeat
+func (nn *NameNode) Heartbeat(datanodeIPAddr string, diskUsage uint64) {
+	for id, datanode := range nn.datanodeList {
+		if datanode.IPAddr == datanodeIPAddr {
+			nn.datanodeList[id].heartbeatTimeStamp = time.Now().Unix()
+		}
+	}
+}
+
+// heartbeatMonitor is a recursive function to check if datanode is available
+func (nn *NameNode) heartbeatMonitor() {
+	heartbeatTimeout := utils.GetConfig().HeartbeatTimeout
+	heartbeatTimeoutDuration := time.Second * time.Duration(heartbeatTimeout)
+	time.Sleep(heartbeatTimeoutDuration)
+
+	for id, datanode := range nn.datanodeList {
+		if time.Since(time.Unix(datanode.heartbeatTimeStamp, 0)) > heartbeatTimeoutDuration {
+			nn.datanodeList[id].status = datanodeDown
+		}
+	}
+	nn.heartbeatMonitor()
 }

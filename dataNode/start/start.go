@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	config          = utils.GetConfig()
-	port            = config.DataNodePort
-	nameNodeHostURL = config.NameNodeHost + config.NameNodePort
+	config            = utils.GetConfig()
+	port              = config.DataNodePort
+	nameNodeHostURL   = config.NameNodeHost + config.NameNodePort
+	heartbeatInterval = config.HeartbeatInterval
 )
 
 type server struct {
@@ -72,6 +73,25 @@ func (s *server) WriteBlock(stream proto.Dfs_WriteBlockServer) error {
 	return nil
 }
 
+func heartBeat() {
+	heartbeatDuration := time.Second * time.Duration(heartbeatInterval)
+	time.Sleep(heartbeatDuration)
+	conn, err := grpc.Dial(nameNodeHostURL, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	// defer conn.Close()
+	c := proto.NewDfsClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	response, err := c.DatanodeHeartbeat(ctx, &proto.Heartbeat{DiskUsage: utils.DiskUsage(utils.GetConfig().DataDir)})
+	if err != nil {
+		log.Fatalf("did not send heartbeat: %v", err)
+	}
+	fmt.Println(response)
+	heartBeat()
+}
+
 func registerDataNode() error {
 	conn, err := grpc.Dial(nameNodeHostURL, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
@@ -89,6 +109,7 @@ func registerDataNode() error {
 		return err
 	}
 	fmt.Println(registerStatus, "registerStatus")
+	go heartBeat()
 	return nil
 }
 
