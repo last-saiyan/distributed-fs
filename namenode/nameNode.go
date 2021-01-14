@@ -20,7 +20,7 @@ type replicaMeta struct {
 	blockName string
 	fileSize  int64
 	ipAddr    string
-	state     string
+	state     replicaState
 	replicaID int
 }
 
@@ -32,11 +32,15 @@ type DatanodeMeta struct {
 	status             datanodeStatus
 }
 
-type datanodeStatus = string
+type datanodeStatus string
+type replicaState string
 
+// namenode constants
 const (
-	datanodeDown = datanodeStatus("datanodeDown")
-	datanodeUp   = datanodeStatus("datanodeUp")
+	datanodeDown     = datanodeStatus("datanodeDown")
+	datanodeUp       = datanodeStatus("datanodeUp")
+	ReplicaPending   = replicaState("pending")
+	ReplicaCommitted = replicaState("committed")
 )
 
 // NameNode struct to interact with the namenode
@@ -84,7 +88,7 @@ func (nn *NameNode) pickDataNodeToAddNewBlock(count int) ([]DatanodeMeta, error)
 	return nn.datanodeList[0:count], nil
 }
 
-func createBlockMeta(blockName string, ipAddr string, fileSize int64, state string) replicaMeta {
+func createBlockMeta(blockName string, ipAddr string, fileSize int64, state replicaState) replicaMeta {
 	blk := replicaMeta{}
 	blk.blockName = blockName
 	blk.ipAddr = ipAddr
@@ -110,7 +114,7 @@ func (nn *NameNode) appendBlock(file string) (*proto.FileLocationArr, error) {
 	}
 	blockMetaArr := make([]replicaMeta, 0)
 	for _, datanode := range datanodes {
-		blkMeta := createBlockMeta(blkName, datanode.IPAddr, 0, "pending")
+		blkMeta := createBlockMeta(blkName, datanode.IPAddr, 0, ReplicaPending)
 		blockMetaArr = append(blockMetaArr, blkMeta)
 	}
 	nn.blockToLocation[blkName] = blockMetaArr
@@ -168,7 +172,7 @@ func (nn *NameNode) WriteToFile(name string) (*proto.FileLocationArr, error) {
 	// perform checks on blockMetaArr if new block has to be created
 	blockMetaArr, found := nn.blockToLocation[lastBlock.blockName]
 	for _, blockMeta := range blockMetaArr {
-		if blockMeta.state != "committed" {
+		if blockMeta.state != ReplicaCommitted {
 			return nil, ErrFileOpen
 		}
 	}
@@ -177,7 +181,7 @@ func (nn *NameNode) WriteToFile(name string) (*proto.FileLocationArr, error) {
 	}
 
 	for i := 0; i < len(blockMetaArr); i++ {
-		blockMetaArr[i].state = "pending"
+		blockMetaArr[i].state = ReplicaPending
 	}
 	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation), nil
 }
@@ -210,7 +214,7 @@ func (nn *NameNode) Complete(blkName string, dataNodeAddr string, fileSize int64
 	}
 	for i := 0; i < len(blockArr); i++ {
 		if blockArr[i].ipAddr == dataNodeAddr {
-			blockArr[i].state = "committed"
+			blockArr[i].state = ReplicaCommitted
 			blockArr[i].fileSize = fileSize
 		}
 	}
