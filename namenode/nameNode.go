@@ -180,8 +180,8 @@ func (nn *NameNode) WriteToFile(name string) (*proto.FileLocationArr, error) {
 		return nn.appendBlock(name)
 	}
 
-	for i := 0; i < len(blockMetaArr); i++ {
-		blockMetaArr[i].state = ReplicaPending
+	for id := range blockMetaArr {
+		blockMetaArr[id].state = ReplicaPending
 	}
 	return convertBlockMetaToProtoFileLocation(blockArr, nn.blockToLocation), nil
 }
@@ -212,10 +212,10 @@ func (nn *NameNode) Complete(blkName string, dataNodeAddr string, fileSize int64
 	if !found {
 		return ErrFileNotFound
 	}
-	for i := 0; i < len(blockArr); i++ {
-		if blockArr[i].ipAddr == dataNodeAddr {
-			blockArr[i].state = ReplicaCommitted
-			blockArr[i].fileSize = fileSize
+	for id, block := range blockArr {
+		if block.ipAddr == dataNodeAddr {
+			blockArr[id].state = ReplicaCommitted
+			blockArr[id].fileSize = fileSize
 		}
 	}
 	// fmt.Println(blockArr, blkName)
