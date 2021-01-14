@@ -18,7 +18,7 @@ type blockMeta struct {
 // BlockMeta wewer
 type replicaMeta struct {
 	blockName string
-	fileSize  int
+	fileSize  int64
 	ipAddr    string
 	state     string
 	replicaID int
@@ -52,18 +52,18 @@ type NameNode struct {
 	// datanodeList contains list of datanode ipAddr
 	datanodeList []DatanodeMeta
 
-	blockSize         int
+	blockSize         int64
 	replicationFactor int
 }
 
 // Init the namenode datastructures,
 // todo recover namenode from crash
-func (nn *NameNode) Init(blockSize int, replicationFactor int) {
+func (nn *NameNode) Init(blockSize int64, replicationFactor int) {
 	nn.fileToBlock = make(map[string][]blockMeta)
 	nn.blockToLocation = make(map[string][]replicaMeta)
 	nn.blockSize = blockSize
 	nn.replicationFactor = replicationFactor
-	nn.heartbeatMonitor()
+	go nn.heartbeatMonitor()
 }
 
 // RegisterDataNode adds ip to list of datanodeList
@@ -84,7 +84,7 @@ func (nn *NameNode) pickDataNodeToAddNewBlock(count int) ([]DatanodeMeta, error)
 	return nn.datanodeList[0:count], nil
 }
 
-func createBlockMeta(blockName string, ipAddr string, fileSize int, state string) replicaMeta {
+func createBlockMeta(blockName string, ipAddr string, fileSize int64, state string) replicaMeta {
 	blk := replicaMeta{}
 	blk.blockName = blockName
 	blk.ipAddr = ipAddr
@@ -203,7 +203,7 @@ func convertBlockMetaToProtoFileLocation(blockArr []blockMeta, blockToLocation m
 }
 
 // Complete is called when datanode completes
-func (nn *NameNode) Complete(blkName string, dataNodeAddr string, fileSize int) error {
+func (nn *NameNode) Complete(blkName string, dataNodeAddr string, fileSize int64) error {
 	blockArr, found := nn.blockToLocation[blkName]
 	if !found {
 		return ErrFileNotFound

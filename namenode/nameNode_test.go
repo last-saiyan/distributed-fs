@@ -6,7 +6,7 @@ import (
 
 func TestCreateFile(t *testing.T) {
 	nn := NameNode{}
-	nn.Init(1000, 3) // without datanode
+	nn.Init(1000, 3)
 	fileName := "testFile"
 	fileLocationArr, err := nn.CreateFile(fileName)
 	if err == ErrReplicaCount {
@@ -16,14 +16,10 @@ func TestCreateFile(t *testing.T) {
 	}
 
 	// adding datanodes
-	dn := DatanodeMeta{IPAddr: "123", DiskUsage: 23}
-	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{IPAddr: "234", DiskUsage: 3}
-	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{IPAddr: "122", DiskUsage: 53}
-	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{IPAddr: "121", DiskUsage: 28}
-	nn.RegisterDataNode(dn)
+	nn.RegisterDataNode("123", 23)
+	nn.RegisterDataNode("234", 3)
+	nn.RegisterDataNode("122", 53)
+	nn.RegisterDataNode("121", 28)
 	fileLocationArr, err = nn.CreateFile(fileName)
 	if err != nil {
 		t.Errorf("creating file has err")
@@ -71,14 +67,10 @@ func TestWriteFile(t *testing.T) {
 	nn := NameNode{}
 	nn.Init(1000, 3)
 	// CANNOT WRITE IF FILE IS NOT PRESENT
-	dn := DatanodeMeta{IPAddr: "123", DiskUsage: 23}
-	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{IPAddr: "234", DiskUsage: 3}
-	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{IPAddr: "122", DiskUsage: 53}
-	nn.RegisterDataNode(dn)
-	dn = DatanodeMeta{IPAddr: "121", DiskUsage: 28}
-	nn.RegisterDataNode(dn)
+	nn.RegisterDataNode("123", 23)
+	nn.RegisterDataNode("234", 3)
+	nn.RegisterDataNode("122", 53)
+	nn.RegisterDataNode("121", 28)
 	fileLocationArr, err := nn.WriteToFile(fileName)
 	if err == ErrFileNotFound {
 		t.Logf("cant write to files that is not yet created")
