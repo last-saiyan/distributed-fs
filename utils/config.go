@@ -28,10 +28,10 @@ func GetConfig() Config {
 	var config Config
 	file := "./config.json"
 	configFile, err := os.Open(file)
-	defer configFile.Close()
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	defer configFile.Close()
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
 	CreateDir(config.DataDir)

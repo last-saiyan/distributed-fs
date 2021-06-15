@@ -20,6 +20,17 @@ var (
 	blockSize    = config.BlockSize
 )
 
+func getGrpcClientConn(address string) (*grpc.ClientConn, *proto.DfsClient, *context.CancelFunc, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	conn, err := grpc.DialContext(ctx, address, grpc.WithInsecure(), grpc.WithBlock())
+	// conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect to %v error %v", address, err)
+	}
+	client := proto.NewDfsClient(conn)
+	return conn, &client, &cancel, err
+}
+
 // Read a file
 // returns bytes of the file
 // todo add offset
@@ -41,16 +52,16 @@ func Read(fileName string) []byte {
 }
 
 func readBlock(chunkName string, ipAddr string) []byte {
-	conn, err := grpc.Dial(ipAddr+datanodePort, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
+	conn, client, cancel1, _ := getGrpcClientConn(ipAddr + datanodePort)
+	defer (*cancel1)()
 	defer conn.Close()
-	c := proto.NewDfsClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	fileStream, err := c.GetBlock(ctx, &proto.FileName{FileName: chunkName})
+	fileStream, err := (*client).GetBlock(ctx, &proto.FileName{FileName: chunkName})
+	if err != nil {
+		log.Fatalf("error getting block %v", err)
+	}
 	chunkData := bytes.Buffer{}
 	for {
 		res, err := fileStream.Recv()
@@ -65,32 +76,23 @@ func readBlock(chunkName string, ipAddr string) []byte {
 }
 
 func getFileLocation(fileName string, mode proto.FileName_Mode) *proto.FileLocationArr {
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
+	conn, client, _, _ := getGrpcClientConn(address)
 	defer conn.Close()
-	c := proto.NewDfsClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.GetFileLocation(ctx, &proto.FileName{FileName: fileName, Mode: mode})
+	fileLocationArr, err := (*client).GetFileLocation(ctx, &proto.FileName{FileName: fileName, Mode: mode})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
-	return r
+	return fileLocationArr
 }
 
 func writeBlock(chunkName string, ipAddr string, data []byte, blockReplicaList *proto.BlockReplicaList) error {
-	conn, err := grpc.Dial(ipAddr+datanodePort, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
+	conn, client, _, _ := getGrpcClientConn(ipAddr + datanodePort)
 	defer conn.Close()
-	c := proto.NewDfsClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	// client := proto.Dfs_WriteBlockClient
-	writeBlockClient, err := c.WriteBlock(ctx)
+	writeBlockClient, err := (*client).WriteBlock(ctx)
 	if err != nil {
 		return err
 	}
@@ -106,7 +108,7 @@ func writeBlock(chunkName string, ipAddr string, data []byte, blockReplicaList *
 			max = len(data)
 		}
 		chunk := data[sentDataLength:max]
-		err = writeBlockClient.Send(&proto.FileWriteStream{File: &proto.File{Content: chunk}})
+		_ = writeBlockClient.Send(&proto.FileWriteStream{File: &proto.File{Content: chunk}})
 		sentDataLength = chunkSize + sentDataLength
 	}
 	blockStatus, error := writeBlockClient.CloseAndRecv()
@@ -145,16 +147,13 @@ func Append(fileName string) bool {
 // sends heartbeat to namenode to check if its alive and
 // renews the file lease
 func renewLock(file string) {
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
+	conn, dfsClient, cancel1, _ := getGrpcClientConn(address + datanodePort)
+	defer (*cancel1)()
 	defer conn.Close()
-	dfsClient := proto.NewDfsClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := dfsClient.RenewLock(ctx, &proto.FileName{FileName: file})
+	res, err := (*dfsClient).RenewLock(ctx, &proto.FileName{FileName: file})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
@@ -167,19 +166,16 @@ func renewLock(file string) {
 }
 
 func createFileNameNode(fileName string) *proto.FileLocationArr {
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
+	conn, dfsClient, cancel1, _ := getGrpcClientConn(address + datanodePort)
 	defer conn.Close()
-	c := proto.NewDfsClient(conn)
+	defer (*cancel1)()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.GetFileLocation(ctx, &proto.FileName{FileName: fileName})
+	fileLocationArr, err := (*dfsClient).GetFileLocation(ctx, &proto.FileName{FileName: fileName})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
-	return r
+	return fileLocationArr
 }
 
 // CreateFile creates a file
