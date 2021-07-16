@@ -26,8 +26,9 @@ type server struct {
 }
 
 func (s *server) GetBlock(in *proto.FileName, stream proto.Dfs_GetBlockServer) error {
-	b := datanode.Block{}
-	b.InitBlock(in.FileName, "r")
+	// b := datanode.Block{}
+	b := datanode.GetNewBlock(in.FileName, "r")
+	// b.InitBlock(in.FileName, "r")
 	for b.HasNextChunk() {
 		chunk, n, err := b.GetNextChunk()
 		if err != nil {
@@ -40,7 +41,6 @@ func (s *server) GetBlock(in *proto.FileName, stream proto.Dfs_GetBlockServer) e
 }
 
 func (s *server) WriteBlock(stream proto.Dfs_WriteBlockServer) error {
-	b := datanode.Block{}
 	fileWriteStream, err := stream.Recv()
 	if err == io.EOF {
 		blockStatus := proto.BlockStatus{Success: false}
@@ -50,7 +50,7 @@ func (s *server) WriteBlock(stream proto.Dfs_WriteBlockServer) error {
 	// replicaList := fileWriteStream.BlockReplicaList.BlockReplicaList
 	// fmt.Println(replicaList, "replicaList")
 	fileName := fileWriteStream.BlockReplicaList.BlockReplicaList[0].BlockName
-	b.InitBlock(fileName, "w")
+	b := datanode.GetNewBlock(fileName, "w")
 	fmt.Println(fileWriteStream, "fileWriteStream")
 	file := make([]byte, 0)
 	for {

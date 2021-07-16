@@ -22,8 +22,15 @@ type Block struct {
 
 var config = utils.GetConfig()
 
+// GetNewBlock gets new initilized struct
+func GetNewBlock(blockName string, mode string) *Block {
+	b := Block{}
+	b.initBlock(blockName, mode)
+	return &b
+}
+
 // InitBlock initilizes the struct with necessary details
-func (b *Block) InitBlock(blockName string, mode string) {
+func (b *Block) initBlock(blockName string, mode string) {
 	var file *os.File
 	var err error
 	var reader *bufio.Reader

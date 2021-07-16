@@ -16,9 +16,7 @@ import (
 
 var (
 	nameNodePort = utils.GetConfig().NameNodePort
-	blockSize    = utils.GetConfig().BlockSize
-	replicaCount = utils.GetConfig().Replica
-	nn           = namenode.NameNode{}
+	nn           = namenode.GetNewNameNode(utils.GetConfig().BlockSize, utils.GetConfig().Replica)
 )
 
 type server struct {
@@ -56,8 +54,6 @@ func (s *server) RenewLock(ctx context.Context, in *proto.FileName) (*proto.Rene
 }
 
 func main() {
-	nn.Init(blockSize, replicaCount)
-	utils.GetConfig()
 	lis, err := net.Listen("tcp", nameNodePort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

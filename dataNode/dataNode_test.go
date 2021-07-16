@@ -13,8 +13,7 @@ func TestRead(t *testing.T) {
 	tempFile := "temp.txt"
 	tempContent := "here is some temp content"
 	createTempFile(tempFile, tempContent)
-	b := Block{}
-	b.InitBlock(tempFile, "r")
+	b := GetNewBlock(tempFile, "r")
 	temp := make([]byte, 0)
 	for b.HasNextChunk() {
 		chunk, size, _ := b.GetNextChunk()
@@ -48,8 +47,7 @@ func TestWrite(t *testing.T) {
 	tempFile := "temrp.txt"
 	tempContent := "here is some temp content"
 	// createTempFile(tempFile, tempContent)
-	b := Block{}
-	b.InitBlock(tempFile, "w")
+	b := GetNewBlock(tempFile, "w")
 
 	fileBytes := []byte(tempContent)
 	iter := 0
@@ -67,8 +65,7 @@ func TestWrite(t *testing.T) {
 		iter = iter + config.IoSize
 	}
 
-	b = Block{}
-	b.InitBlock(tempFile, "r")
+	b = GetNewBlock(tempFile, "r")
 	temp := make([]byte, 0)
 	for b.HasNextChunk() {
 		chunk, size, _ := b.GetNextChunk()

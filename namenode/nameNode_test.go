@@ -5,8 +5,7 @@ import (
 )
 
 func TestCreateFile(t *testing.T) {
-	nn := NameNode{}
-	nn.Init(1000, 3)
+	nn := GetNewNameNode(1000, 3)
 	fileName := "testFile"
 	fileLocationArr, err := nn.CreateFile(fileName)
 	if err == ErrReplicaCount {
@@ -64,8 +63,7 @@ func TestCreateFile(t *testing.T) {
 
 func TestWriteFile(t *testing.T) {
 	fileName := "testFile"
-	nn := NameNode{}
-	nn.Init(1000, 3)
+	nn := GetNewNameNode(1000, 3)
 	// CANNOT WRITE IF FILE IS NOT PRESENT
 	nn.RegisterDataNode("123", 23)
 	nn.RegisterDataNode("234", 3)

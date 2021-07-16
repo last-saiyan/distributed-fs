@@ -60,14 +60,27 @@ type NameNode struct {
 	replicationFactor int
 }
 
-// Init the namenode datastructures,
-// todo recover namenode from crash
-func (nn *NameNode) Init(blockSize int64, replicationFactor int) {
-	nn.fileToBlock = make(map[string][]blockMeta)
-	nn.blockToLocation = make(map[string][]replicaMeta)
-	nn.blockSize = blockSize
-	nn.replicationFactor = replicationFactor
-	go nn.heartbeatMonitor()
+// // Init the namenode datastructures,
+// // todo recover namenode from crash
+// func (nn *NameNode) Init(blockSize int64, replicationFactor int) {
+// 	nn.fileToBlock = make(map[string][]blockMeta)
+// 	nn.blockToLocation = make(map[string][]replicaMeta)
+// 	nn.blockSize = blockSize
+// 	nn.replicationFactor = replicationFactor
+// 	go nn.heartbeatMonitor()
+// }
+
+// GetNewNameNode is a constructor function
+// returns initilized NameNode
+func GetNewNameNode(blockSize int64, replicationFactor int) *NameNode {
+	namenode := &NameNode{
+		fileToBlock:       make(map[string][]blockMeta),
+		blockToLocation:   make(map[string][]replicaMeta),
+		blockSize:         blockSize,
+		replicationFactor: replicationFactor,
+	}
+	go namenode.heartbeatMonitor()
+	return namenode
 }
 
 // RegisterDataNode adds ip to list of datanodeList
